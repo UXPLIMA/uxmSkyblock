@@ -383,8 +383,12 @@ public class MenuManager {
             plugin.getMessages().send(player, "no-island-permission");
             return;
         }
-        island.setFlag(flag, !island.getFlag(flag));
+        boolean newValue = !island.getFlag(flag);
+        island.setFlag(flag, newValue);
         islandManager.saveAsync(island);
+        plugin.getMessages().send(player, "flag-toggled",
+                "{flag}", prettyName(flag.name()),
+                "{state}", plugin.getMessages().get(newValue ? "flag-on" : "flag-off"));
         open(player, holder.getMenuId(), island.getUniqueId(), holder.getPage());
     }
 
@@ -396,6 +400,8 @@ public class MenuManager {
         }
         island.setLocked(!island.isLocked());
         islandManager.saveAsync(island);
+        plugin.getMessages().send(player, "visitors-toggled",
+                "{state}", plugin.getMessages().get(island.isLocked() ? "visit-closed" : "visit-open"));
         open(player, holder.getMenuId(), island.getUniqueId(), holder.getPage());
     }
 
@@ -411,6 +417,7 @@ public class MenuManager {
         }
         island.setTime(island.getTime().next());
         islandManager.saveAsync(island);
+        plugin.getMessages().send(player, "time-changed", "{time}", island.getTime().getDisplayName());
         open(player, holder.getMenuId(), island.getUniqueId(), holder.getPage());
     }
 

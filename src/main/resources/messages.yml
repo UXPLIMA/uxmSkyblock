@@ -109,6 +109,9 @@ messages:
   # Island settings flags
   flag-on: "&aON"
   flag-off: "&cOFF"
+  flag-toggled: "&7{flag} &7set to {state}&7."
+  visitors-toggled: "&7Visitors: {state}"
+  time-changed: "&7Island time: &b{time}"
 
   # Generic yes/no used by PlaceholderAPI placeholders
   placeholder-yes: "&aYes"
