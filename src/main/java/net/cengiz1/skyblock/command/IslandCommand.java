@@ -19,6 +19,7 @@ public class IslandCommand extends Command {
     private final MemberCommands members;
     private final SettingsCommands settings;
     private final AdminCommands admin;
+    private final WarpCommands warps;
 
     public IslandCommand(SkyblockPlugin plugin, String name, List<String> aliases, Map<String, String> resolver) {
         super(name);
@@ -28,6 +29,7 @@ public class IslandCommand extends Command {
         this.members = new MemberCommands(plugin);
         this.settings = new SettingsCommands(plugin);
         this.admin = new AdminCommands(plugin);
+        this.warps = new WarpCommands(plugin);
         setAliases(aliases);
         setDescription("Island commands");
     }
@@ -83,6 +85,10 @@ public class IslandCommand extends Command {
             case "ucus":      settings.toggleFly(player); break;
             case "kilit":     settings.toggleLock(player); break;
 
+            case "warp":      warps.warp(player, arg1); break;
+            case "setwarp":   warps.setWarp(player); break;
+            case "delwarp":   warps.delWarp(player); break;
+
             case "proxy":     admin.proxyStatus(player); break;
             case "anaspawn":  admin.setGlobalSpawn(player); break;
 
@@ -115,7 +121,7 @@ public class IslandCommand extends Command {
         switch (canonical) {
             case "davet": case "at": case "devret": case "ban":
             case "unban": case "trust": case "untrust": case "rol":
-            case "ziyaret":
+            case "ziyaret": case "warp":
                 return true;
             default:
                 return false;

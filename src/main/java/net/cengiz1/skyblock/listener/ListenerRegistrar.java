@@ -8,7 +8,6 @@ import net.cengiz1.skyblock.menu.MenuListener;
 import net.cengiz1.skyblock.proxy.ProxyListener;
 import net.cengiz1.skyblock.upgrade.UpgradeEffectListener;
 import org.bukkit.event.Listener;
-import org.bukkit.plugin.PluginManager;
 
 public final class ListenerRegistrar {
 
@@ -16,7 +15,6 @@ public final class ListenerRegistrar {
     }
 
     public static void registerAll(SkyblockPlugin plugin) {
-        PluginManager manager = plugin.getServer().getPluginManager();
         IslandManager islandManager = plugin.getIslandManager();
 
         register(plugin, new MenuListener(plugin.getMenuManager()));
@@ -26,6 +24,7 @@ public final class ListenerRegistrar {
         register(plugin, new ExplosionListener(islandManager));
         register(plugin, new FireListener(islandManager));
         register(plugin, new VisitorInteractListener(islandManager));
+        register(plugin, new WarpSignListener(plugin));
 
         register(plugin, new BlockTrackListener(plugin, islandManager,
                 plugin.getBlockValueManager(), plugin.getLevelManager()));

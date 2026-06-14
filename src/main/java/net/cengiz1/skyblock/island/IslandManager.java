@@ -227,6 +227,17 @@ public class IslandManager {
         plugin.getMessages().send(owner, "deleted");
     }
 
+    public void teleportToWarp(Player player, Island island) {
+        World world = this.worldManager.getWorld();
+        Location target = island.getWarp(world);
+        if (target == null)
+            target = island.getHome(world);
+        world.getChunkAt(target);
+        player.teleport(target);
+        if (this.borderManager != null)
+            this.borderManager.apply(player, island);
+    }
+
     public void teleportHome(Player player, Island island) {
         World world = this.worldManager.getWorld();
         Location home = island.getHome(world);

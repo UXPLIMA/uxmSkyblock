@@ -31,12 +31,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MenuManager {
 
     private static final String[] DEFAULT_MENUS = {
-            "main.yml", "settings.yml", "upgrades.yml", "help.yml", "delete-confirm.yml"
+            "main.yml", "settings.yml", "upgrades.yml", "help.yml", "delete-confirm.yml", "warp.yml"
     };
+
+    private static final Pattern FLAG_PATTERN = Pattern.compile("\\{flag_([a-zA-Z_]+)\\}");
 
     private final SkyblockPlugin plugin;
     private final IslandManager islandManager;
@@ -144,6 +148,9 @@ public class MenuManager {
         if (definition.getType().equals("warp"))
             populateWarp(definition, inventory, holder);
 
+        if (definition.getType().equals("warps"))
+            populateWarps(definition, inventory, holder);
+
         player.openInventory(inventory);
     }
 
@@ -167,6 +174,29 @@ public class MenuManager {
             Island island = islands.get(index);
             inventory.setItem(slot, buildHead(definition, island));
             holder.getActions().put(slot, "visit:" + island.getOwner());
+        }
+    }
+
+    private void populateWarps(MenuDefinition definition, Inventory inventory, MenuHolder holder) {
+        List<Integer> slots = definition.getHeadSlots();
+        if (slots.isEmpty())
+            return;
+
+        List<Island> islands = plugin.getWarpService().getWarps();
+        int perPage = slots.size();
+        int pageCount = Math.max(1, (int) Math.ceil(islands.size() / (double) perPage));
+        int page = Math.min(holder.getPage(), pageCount - 1);
+        holder.setPageCount(pageCount);
+
+        int start = page * perPage;
+        for (int i = 0; i < perPage; i++) {
+            int index = start + i;
+            int slot = slots.get(i);
+            if (slot < 0 || slot >= inventory.getSize() || index >= islands.size())
+                continue;
+            Island island = islands.get(index);
+            inventory.setItem(slot, buildHead(definition, island));
+            holder.getActions().put(slot, "warpto:" + island.getOwner());
         }
     }
 
@@ -276,6 +306,10 @@ public class MenuManager {
             handleVisit(player, action.substring(6).trim());
             return;
         }
+        if (lower.startsWith("warpto:")) {
+            handleWarpTo(player, action.substring(7).trim());
+            return;
+        }
         if (lower.startsWith("command:")) {
             player.closeInventory();
             player.performCommand(action.substring(8).trim());
@@ -316,6 +350,17 @@ public class MenuManager {
         }
         player.closeInventory();
         plugin.getVisitService().visitOwner(player, ownerId);
+    }
+
+    private void handleWarpTo(Player player, String ownerRaw) {
+        UUID ownerId;
+        try {
+            ownerId = UUID.fromString(ownerRaw);
+        } catch (IllegalArgumentException error) {
+            return;
+        }
+        player.closeInventory();
+        plugin.getWarpService().warpToOwner(player, ownerId);
     }
 
     private void handleDelete(Player player, MenuHolder holder) {
@@ -461,13 +506,30 @@ public class MenuManager {
         double next = island != null ? plugin.getLevelManager().pointsForNextLevel(island.getLevel()) : -1;
         result = result.replace("{next_points}", next < 0 ? "MAX" : formatNumber(next));
 
+        result = replaceFlags(result, island);
+        return Placeholders.apply(player, result);
+    }
+
+    private String replaceFlags(String text, Island island) {
+        if (text.indexOf('{') < 0)
+            return text;
         String flagOn = plugin.getMessages().get("flag-on");
         String flagOff = plugin.getMessages().get("flag-off");
-        for (IslandFlag flag : IslandFlag.values()) {
-            boolean value = island != null ? island.getFlag(flag) : flag.getDefault();
-            result = result.replace("{flag_" + flag.name().toLowerCase() + "}", value ? flagOn : flagOff);
+        Matcher matcher = FLAG_PATTERN.matcher(text);
+        StringBuffer buffer = new StringBuffer();
+        while (matcher.find()) {
+            IslandFlag flag = IslandFlag.fromString(matcher.group(1));
+            String replacement;
+            if (flag != null) {
+                boolean value = island != null ? island.getFlag(flag) : flag.getDefault();
+                replacement = value ? flagOn : flagOff;
+            } else {
+                replacement = matcher.group(0);
+            }
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(replacement));
         }
-        return Placeholders.apply(player, result);
+        matcher.appendTail(buffer);
+        return buffer.toString();
     }
 
     private String applyHead(String text, OfflinePlayer owner, Island island) {

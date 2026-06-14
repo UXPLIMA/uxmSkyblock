@@ -63,6 +63,9 @@ command:
     ayarlar: ["settings", "ayarlar", "ayar"]
     yukseltme: ["upgrade", "yükseltme", "yukseltme", "yukselt"]
     level: ["level", "seviye", "lvl"]
+    warp: ["warp", "git-warp"]
+    setwarp: ["setwarp", "warpkur", "warpayarla"]
+    delwarp: ["delwarp", "warpsil"]
     setspawn: ["setspawn", "sethome", "spawnayarla"]
     ucus: ["fly", "uçuş", "ucus"]
     kilit: ["lock", "kilit", "kapat"]
@@ -73,6 +76,15 @@ command:
     yardim: ["help", "yardım", "yardim", "?"]
   # How long an invite stays valid, in seconds.
   invite-expire-seconds: 120
+
+# Public island warps. Players reach them with /island warp (menu) or
+# /island warp <player>, and set them with /island setwarp or a warp sign.
+warp:
+  # Write this on the first line of a sign (on your island) to turn it into a
+  # warp sign; the warp point is set to where you stand. Color codes not needed.
+  sign-tag: "[warp]"
+  # How the first line looks after the sign becomes an active warp.
+  sign-display: "&9[Warp]"
 
 economy:
   # Require the upgrade 'required-money' (Vault) cost? Disabled automatically

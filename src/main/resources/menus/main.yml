@@ -29,6 +29,15 @@ head-lore:
 member-format: "&8• &f{player} &7{role}"
 
 items:
+  warps:
+    slot: 4
+    material: ENDER_PEARL
+    name: "&dIsland Warps"
+    lore:
+      - "&7Browse public island warps."
+      - "&eClick to open!"
+    action: "open:warp"
+
   help:
     slot: 36
     material: BOOK

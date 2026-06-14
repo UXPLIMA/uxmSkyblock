@@ -3,6 +3,7 @@ package net.cengiz1.skyblock.command;
 import net.cengiz1.skyblock.SkyblockPlugin;
 import net.cengiz1.skyblock.config.SettingsManager;
 import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 
 import java.lang.reflect.Field;
@@ -33,9 +34,57 @@ public final class CommandRegistrar {
             plugin.getLogger().severe("Could not access the CommandMap; the island command was not registered!");
             return;
         }
+
+        unregister(plugin, commandMap);
         commandMap.register(plugin.getName().toLowerCase(), command);
+        syncCommands();
         plugin.getLogger().info("Registered island command: /" + settings.getCommandName()
                 + " (" + String.join(", ", settings.getCommandAliases()) + ")");
+    }
+
+    public static void unregister(SkyblockPlugin plugin) {
+        CommandMap commandMap = getCommandMap();
+        if (commandMap != null) {
+            unregister(plugin, commandMap);
+            syncCommands();
+        }
+    }
+
+    private static void unregister(SkyblockPlugin plugin, CommandMap commandMap) {
+        Map<String, Command> known = getKnownCommands(commandMap);
+        if (known == null)
+            return;
+        known.values().removeIf(value -> {
+            if (value instanceof IslandCommand) {
+                value.unregister(commandMap);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Command> getKnownCommands(CommandMap commandMap) {
+        Class<?> type = commandMap.getClass();
+        while (type != null) {
+            try {
+                Field field = type.getDeclaredField("knownCommands");
+                field.setAccessible(true);
+                return (Map<String, Command>) field.get(commandMap);
+            } catch (NoSuchFieldException ignored) {
+                type = type.getSuperclass();
+            } catch (IllegalAccessException error) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private static void syncCommands() {
+        try {
+            Bukkit.getServer().getClass().getMethod("syncCommands").invoke(Bukkit.getServer());
+        } catch (ReflectiveOperationException ignored) {
+        }
     }
 
     private static CommandMap getCommandMap() {

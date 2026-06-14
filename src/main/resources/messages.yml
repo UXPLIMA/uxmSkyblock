@@ -39,6 +39,15 @@ messages:
   proxy-island-none: "(no island)"
   proxy-island-unassigned: "(unassigned)"
   must-be-on-island: "&cYou must be on your island to do that."
+
+  # Warps
+  warping: "&7Warping to {player}'s island..."
+  warp-set: "&aIsland warp point has been set."
+  warp-set-unsafe: "&cYou can't set a warp here; it isn't safe to land on."
+  warp-removed: "&aIsland warp has been removed."
+  warp-none: "&cYour island doesn't have a warp set."
+  warp-no-warp: "&c'{player}' doesn't have a public warp."
+  warp-unsafe: "&cThat warp is not safe to teleport to right now."
   spawn-set: "&aIsland spawn point has been set."
   global-spawn-set: "&aThe global spawn (where players go when an island is deleted) has been set to your location."
 

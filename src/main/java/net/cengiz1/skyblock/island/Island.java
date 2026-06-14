@@ -28,6 +28,13 @@ public class Island {
     private float homeYaw;
     private float homePitch;
 
+    private boolean hasWarp;
+    private double warpX;
+    private double warpY;
+    private double warpZ;
+    private float warpYaw;
+    private float warpPitch;
+
     private String name;
     private boolean locked;
     private IslandTime time = IslandTime.NORMAL;
@@ -116,6 +123,60 @@ public class Island {
         this.homeZ = z;
         this.homeYaw = yaw;
         this.homePitch = pitch;
+    }
+
+    public boolean hasWarp() {
+        return hasWarp;
+    }
+
+    public Location getWarp(World world) {
+        if (!hasWarp)
+            return null;
+        return new Location(world, warpX, warpY, warpZ, warpYaw, warpPitch);
+    }
+
+    public void setWarp(Location location) {
+        this.warpX = location.getX();
+        this.warpY = location.getY();
+        this.warpZ = location.getZ();
+        this.warpYaw = location.getYaw();
+        this.warpPitch = location.getPitch();
+        this.hasWarp = true;
+        this.dirty = true;
+    }
+
+    public void clearWarp() {
+        this.hasWarp = false;
+        this.dirty = true;
+    }
+
+    public void setWarpRaw(boolean hasWarp, double x, double y, double z, float yaw, float pitch) {
+        this.hasWarp = hasWarp;
+        this.warpX = x;
+        this.warpY = y;
+        this.warpZ = z;
+        this.warpYaw = yaw;
+        this.warpPitch = pitch;
+    }
+
+    public double getWarpX() {
+        return warpX;
+    }
+
+    public double getWarpY() {
+        return warpY;
+    }
+
+    public double getWarpZ() {
+        return warpZ;
+    }
+
+    public float getWarpYaw() {
+        return warpYaw;
+    }
+
+    public float getWarpPitch() {
+        return warpPitch;
     }
 
     public double getHomeX() {

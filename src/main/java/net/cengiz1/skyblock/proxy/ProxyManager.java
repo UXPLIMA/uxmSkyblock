@@ -190,6 +190,21 @@ public class ProxyManager {
         return true;
     }
 
+    public boolean handleWarpTeleport(Player player, Island island) {
+        if (!enabled)
+            return false;
+
+        String target = island.getServerName();
+        if (target == null || target.equals(serverName))
+            return false;
+
+        debug("Routing player " + player.getName() + " -> server '" + target + "' (island warp).");
+        messenger.setWithExpiry(warpKey(player.getUniqueId()), island.getUniqueId().toString(), pendingTtlSeconds);
+        plugin.getMessages().send(player, "proxy-sending", "{server}", target);
+        connector.connect(player, target);
+        return true;
+    }
+
     public boolean sendToSpawn(Player player) {
         if (!enabled || spawnServer == null || spawnServer.isEmpty() || spawnServer.equals(serverName))
             return false;
@@ -208,6 +223,36 @@ public class ProxyManager {
             return;
         tryCompletePendingCreate(player);
         tryCompletePendingTeleport(player);
+        tryCompletePendingWarp(player);
+    }
+
+    public void tryCompletePendingWarp(Player player) {
+        if (!enabled)
+            return;
+        UUID playerId = player.getUniqueId();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String value = messenger.takeValue(warpKey(playerId));
+            if (value == null)
+                return;
+            UUID islandId;
+            try {
+                islandId = UUID.fromString(value);
+            } catch (IllegalArgumentException error) {
+                return;
+            }
+            if (plugin.getIslandManager().getById(islandId) == null)
+                plugin.getIslandManager().reloadIsland(islandId);
+
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                Player online = Bukkit.getPlayer(playerId);
+                Island island = plugin.getIslandManager().getById(islandId);
+                if (online != null && online.isOnline() && island != null) {
+                    plugin.getMessages().send(online, "warping", "{player}",
+                            org.bukkit.Bukkit.getOfflinePlayer(island.getOwner()).getName());
+                    plugin.getIslandManager().teleportToWarp(online, island);
+                }
+            }, 20L);
+        });
     }
 
     public void tryCompletePendingCreate(Player player) {
@@ -340,5 +385,9 @@ public class ProxyManager {
 
     private String createKey(UUID playerId) {
         return channel + ":pending-create:" + playerId;
+    }
+
+    private String warpKey(UUID playerId) {
+        return channel + ":pending-warp:" + playerId;
     }
 }

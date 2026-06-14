@@ -1,0 +1,47 @@
+# Public warp menu (/island warp).
+# type: warps -> the head slots are filled with islands that set a public warp.
+# Clicking a head teleports you to that island's warp point (cross-server aware).
+
+title: "&8Island Warps"
+rows: 5
+type: warps
+
+head-slots: [10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34]
+
+head-name: "&7[&b%vault_group%&7] &f{owner} &7[&e{level}&7]"
+
+head-lore:
+  - "&7Level: &e{level}"
+  - "&7Points: &e{points}"
+  - "&7Members: &e{members}&7/&e{team_limit}"
+  - ""
+  - "{member_list}"
+  - ""
+  - "&eClick to warp here!"
+
+member-format: "&8• &f{player} &7{role}"
+
+items:
+  prev-page:
+    slot: 39
+    material: ARROW
+    name: "&ePrevious Page"
+    action: "page:prev"
+
+  close:
+    slot: 40
+    material: BARRIER
+    name: "&cClose"
+    action: "close"
+
+  next-page:
+    slot: 41
+    material: ARROW
+    name: "&eNext Page"
+    action: "page:next"
+
+  back:
+    slot: 36
+    material: NETHER_STAR
+    name: "&aMain Menu"
+    action: "open:main"
