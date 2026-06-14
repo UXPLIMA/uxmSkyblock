@@ -1,0 +1,26 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  ADA SEVİYELERİ                                                 ║
+# ║  Bir seviyeye ulaşmak için gereken TOPLAM puan.                ║
+# ║  Örn: 1. seviye = 100 puan, 2. seviye = 250 puan ...           ║
+# ║  Puanlar block-values.yml'deki bloklarla kazanılır.           ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+requirements:
+  1: 100
+  2: 250
+  3: 500
+  4: 1000
+  5: 2000
+  6: 3500
+  7: 5500
+  8: 8000
+  9: 12000
+  10: 18000
+
+# Listede tanımlı en yüksek seviyeden sonrası için otomatik üretim.
+auto:
+  enabled: true
+  # Son tanımlı seviyeden sonra her yeni seviyeye eklenecek temel puan.
+  step: 8000
+  # Her seviyede 'step' bununla çarpılır (1.0 = sabit artış).
+  multiplier: 1.15

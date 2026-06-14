@@ -1,0 +1,29 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  BLOK DEĞERLERİ                                                 ║
+# ║  Adaya konulan her blok, ada puanına buradaki değer kadar      ║
+# ║  ekler. Blok kırılınca aynı değer geri düşülür.                ║
+# ║  Puanlar ile seviye atlanır (bkz: levels.yml).                 ║
+# ║  Burada yazmayan bloklar 'default-value' kadar değer verir.    ║
+# ╚══════════════════════════════════════════════════════════════╝
+
+# Listede olmayan bloklar için varsayılan puan (0 = puan vermez).
+default-value: 0.0
+
+values:
+  LAPIS_BLOCK: 0.2
+  NETHERITE_BLOCK: 10.0
+  COAL_BLOCK: 0.2
+  DIAMOND_BLOCK: 2.5
+  QUARTZ_BLOCK: 1.5
+  REDSTONE_BLOCK: 0.3
+  EMERALD_BLOCK: 1.5
+  HONEYCOMB_BLOCK: 1000.0
+  GOLD_BLOCK: 0.8
+  COPPER_BLOCK: 0.6
+  IRON_BLOCK: 0.6
+  # Aşağıdakileri istediğin gibi ekleyip çıkarabilirsin:
+  AMETHYST_BLOCK: 0.4
+  NETHERITE_SCRAP: 0.0
+  STONE: 0.01
+  OAK_LOG: 0.05
+  GRASS_BLOCK: 0.02

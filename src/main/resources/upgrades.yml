@@ -1,0 +1,106 @@
+# ╔══════════════════════════════════════════════════════════════════════╗
+# ║  ADA YÜKSELTMELERİ                                                      ║
+# ║  Her yükseltmenin seviyeleri vardır. Bir seviyeye geçmek için          ║
+# ║  'required-level' (ada seviyesi) ve 'required-money' (Vault parası,     ║
+# ║  ekonomi açıksa) şartı aranır.                                          ║
+# ║                                                                        ║
+# ║  type: value      -> 'value' sayısal değerdir (limit / çarpan / boyut) ║
+# ║  type: generator  -> 'chances' ağırlıklı blok şanslarıdır              ║
+# ╚══════════════════════════════════════════════════════════════════════╝
+
+upgrades:
+
+  # Takım (üye) limiti — value = sahip dahil maksimum üye sayısı
+  team-limit:
+    display-name: "&eSınır Limiti"
+    icon: PLAYER_HEAD
+    slot: 10
+    type: value
+    levels:
+      1: { value: 4,  required-level: 0,  required-money: 0 }
+      2: { value: 6,  required-level: 5,  required-money: 5000 }
+      3: { value: 8,  required-level: 12, required-money: 15000 }
+      4: { value: 12, required-level: 25, required-money: 40000 }
+
+  # Ada boyutu — value = ada tam boyutu (blok, çap). Koruma yarıçapı value/2.
+  size:
+    display-name: "&aAda Boyutu"
+    icon: GRASS_BLOCK
+    slot: 12
+    type: value
+    levels:
+      1: { value: 50,  required-level: 0,  required-money: 0 }
+      2: { value: 80,  required-level: 8,  required-money: 10000 }
+      3: { value: 120, required-level: 20, required-money: 30000 }
+      4: { value: 160, required-level: 40, required-money: 75000 }
+
+  # Çiftlik ürünleri — value = mahsül katlama şansı (%). Olgun mahsul kırılınca.
+  crop-growth:
+    display-name: "&2Çiftlik Ürünleri Mahsül Katlama Şansı"
+    icon: WHEAT
+    slot: 14
+    type: value
+    levels:
+      1: { value: 0,  required-level: 0,  required-money: 0 }
+      2: { value: 15, required-level: 5,  required-money: 8000 }
+      3: { value: 30, required-level: 15, required-money: 20000 }
+      4: { value: 50, required-level: 30, required-money: 50000 }
+
+  # Mob ganimetleri — value = drop çarpanı (1 = normal, 2 = iki katı)
+  mob-drops:
+    display-name: "&cMob Ganimetleri"
+    icon: ROTTEN_FLESH
+    slot: 16
+    type: value
+    levels:
+      1: { value: 1, required-level: 0,  required-money: 0 }
+      2: { value: 2, required-level: 10, required-money: 12000 }
+      3: { value: 3, required-level: 25, required-money: 35000 }
+
+  # Spawner hızı — value = gecikme çarpanı (1.0 normal, 0.5 = iki kat hızlı)
+  spawner-rates:
+    display-name: "&bSpawner Hızı"
+    icon: SPAWNER
+    slot: 20
+    type: value
+    levels:
+      1: { value: 1.0, required-level: 0,  required-money: 0 }
+      2: { value: 0.7, required-level: 12, required-money: 20000 }
+      3: { value: 0.4, required-level: 30, required-money: 60000 }
+
+  # Jeneratör — seviyeye göre ağırlıklı blok şansları
+  generator:
+    display-name: "&7Jeneratör"
+    icon: COBBLESTONE
+    slot: 24
+    type: generator
+    levels:
+      1:
+        required-level: 0
+        required-money: 0
+        chances:
+          COBBLESTONE: 100
+      2:
+        required-level: 6
+        required-money: 8000
+        chances:
+          COBBLESTONE: 80
+          COAL_ORE: 15
+          IRON_ORE: 5
+      3:
+        required-level: 18
+        required-money: 25000
+        chances:
+          COBBLESTONE: 60
+          IRON_ORE: 20
+          GOLD_ORE: 15
+          DIAMOND_ORE: 5
+      4:
+        required-level: 35
+        required-money: 70000
+        chances:
+          COBBLESTONE: 40
+          IRON_ORE: 25
+          GOLD_ORE: 20
+          DIAMOND_ORE: 12
+          EMERALD_ORE: 3
