@@ -8,6 +8,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,8 +28,10 @@ public class ProxyManager {
     private final SkyblockPlugin plugin;
 
     private boolean enabled;
+    private boolean debug;
     private String serverName;
     private String spawnServer;
+    private List<String> createServers = new ArrayList<>();
     private String channel;
     private int pendingTtlSeconds;
 
@@ -53,6 +58,51 @@ public class ProxyManager {
         return spawnServer;
     }
 
+    public List<String> getCreateServers() {
+        return createServers;
+    }
+
+    /** Yeni adalar bu (yerel) sunucuda mı oluşturuluyor? Liste boşsa veya bu sunucu listedeyse evet. */
+    public boolean isLocalCreate() {
+        return createServers.isEmpty() || createServers.contains(serverName);
+    }
+
+    /**
+     * Yeni ada için hedef sunucuyu seçer: create-servers listesinde EN AZ adası olan sunucu
+     * (dengeli dağıtım). Tüm adalar paylaşılan DB'den sayılır.
+     */
+    public String chooseCreateServer() {
+        if (createServers.isEmpty())
+            return serverName;
+        if (createServers.size() == 1)
+            return createServers.get(0);
+
+        Map<String, Integer> counts = new HashMap<>();
+        for (String server : createServers)
+            counts.put(server, 0);
+        for (Island island : plugin.getIslandManager().getAllIslands()) {
+            String host = island.getServerName();
+            if (host != null && counts.containsKey(host))
+                counts.put(host, counts.get(host) + 1);
+        }
+
+        String best = createServers.get(0);
+        int bestCount = Integer.MAX_VALUE;
+        for (String server : createServers) {
+            int count = counts.getOrDefault(server, 0);
+            if (count < bestCount) {
+                bestCount = count;
+                best = server;
+            }
+        }
+        return best;
+    }
+
+    private void debug(String message) {
+        if (debug)
+            plugin.getLogger().info("[Proxy] " + message);
+    }
+
     /**
      * Proxy modülünü başlatır. Redis'e bağlanamazsa modül kapalı kalır;
      * ana skyblock plugini her durumda çalışmaya devam eder.
@@ -66,8 +116,10 @@ public class ProxyManager {
 
         this.serverName = settings.getProxyServerName();
         this.spawnServer = settings.getProxySpawnServer();
+        this.createServers = new ArrayList<>(settings.getProxyCreateServers());
         this.channel = settings.getProxyRedisChannel();
         this.pendingTtlSeconds = settings.getProxyPendingSeconds();
+        this.debug = settings.isProxyDebug();
 
         if (serverName == null || serverName.isEmpty()) {
             plugin.getLogger().severe("Proxy: 'proxy.server-name' boş bırakılamaz; proxy modülü kapatıldı.");
@@ -128,18 +180,110 @@ public class ProxyManager {
         String target = island.getServerName();
         if (target == null) {
             // Migrasyon: sunucusu atanmamış eski adayı bu sunucuya stampla, yerel ışınla.
+            debug("Ada " + island.getUniqueId() + " sunucusuz; " + serverName + " olarak işaretlendi (yerel ışınlama).");
             island.setServerName(serverName);
             plugin.getIslandManager().saveAsync(island);
             return false;
         }
-        if (target.equals(serverName))
+        if (target.equals(serverName)) {
+            debug("Ada " + island.getUniqueId() + " zaten bu sunucuda; yerel ışınlama.");
             return false;
+        }
 
         // Hedef sunucuya bağlanınca tamamlanacak ışınlanmayı Redis'e yaz.
+        debug("Oyuncu " + player.getName() + " -> '" + target + "' sunucusuna yönlendiriliyor (ada ışınlama).");
         messenger.setWithExpiry(pendingKey(player.getUniqueId()), island.getUniqueId().toString(), pendingTtlSeconds);
         plugin.getMessages().send(player, "proxy-sending", "{server}", target);
         connector.connect(player, target);
         return true;
+    }
+
+    /**
+     * Uzak ada oluşturma isteğini ele alır. Yeni adalar başka bir sunucuda oluşturulacaksa
+     * (create-server != bu sunucu), oyuncuyu oraya gönderir, bekleyen oluşturma kaydını yazar
+     * ve true döner. Yerelse false döner (çağıran yerelde oluşturur).
+     *
+     * @param schematicKey seçilen şematik (null olabilir)
+     */
+    public boolean handleRemoteCreate(Player player, String schematicKey) {
+        if (!enabled || isLocalCreate())
+            return false;
+
+        String target = chooseCreateServer();
+        if (target == null || target.equals(serverName))
+            return false;
+
+        debug("Oyuncu " + player.getName() + " -> '" + target + "' sunucusuna yönlendiriliyor (ada oluşturma).");
+        // Hedef sunucuda giriş yapınca oluşturmayı tetikleyecek kaydı yaz ('-' = varsayılan şematik).
+        String value = schematicKey == null ? "-" : schematicKey;
+        messenger.setWithExpiry(createKey(player.getUniqueId()), value, pendingTtlSeconds);
+        plugin.getMessages().send(player, "proxy-creating", "{server}", target);
+        connector.connect(player, target);
+        return true;
+    }
+
+    /** Oyuncuyu spawn sunucusuna gönderir. Spawn bu sunucuysa/boşsa false döner. */
+    public boolean sendToSpawn(Player player) {
+        if (!enabled || spawnServer == null || spawnServer.isEmpty() || spawnServer.equals(serverName))
+            return false;
+        debug("Oyuncu " + player.getName() + " -> '" + spawnServer + "' (spawn) sunucusuna gönderiliyor.");
+        connector.connect(player, spawnServer);
+        return true;
+    }
+
+    /** Oyuncuyu belirtilen sunucuya gönderir. */
+    public void sendToServer(Player player, String server) {
+        if (enabled && server != null && !server.isEmpty())
+            connector.connect(player, server);
+    }
+
+    /** Oyuncu giriş yaptığında bekleyen oluşturma/ışınlanma isteklerini tamamlar. */
+    public void onPlayerJoin(Player player) {
+        if (!enabled)
+            return;
+        tryCompletePendingCreate(player);
+        tryCompletePendingTeleport(player);
+    }
+
+    /** Oyuncu giriş yaptığında bekleyen (çapraz sunucu) ada oluşturmayı tamamlamayı dener. */
+    public void tryCompletePendingCreate(Player player) {
+        if (!enabled)
+            return;
+        UUID playerId = player.getUniqueId();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String value = messenger.takeValue(createKey(playerId));
+            if (value == null)
+                return;
+            String schematic = "-".equals(value) ? null : value;
+            debug("Oyuncu " + player.getName() + " için bekleyen oluşturma bulundu; ada oluşturuluyor.");
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                Player online = Bukkit.getPlayer(playerId);
+                if (online != null && online.isOnline())
+                    startIslandCreation(online, schematic);
+            }, 20L);
+        });
+    }
+
+    private void startIslandCreation(Player player, String schematicKey) {
+        if (plugin.getIslandManager().getByMember(player.getUniqueId()) != null) {
+            plugin.getMessages().send(player, "already-have-island");
+            return;
+        }
+        plugin.getMessages().send(player, "creating");
+        plugin.getIslandManager().getCreationService().create(player, schematicKey).whenComplete((result, error) ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    if (error != null || result == null) {
+                        plugin.getMessages().send(player, "create-failed");
+                        return;
+                    }
+                    switch (result) {
+                        case SUCCESS: plugin.getMessages().send(player, "created"); break;
+                        case ALREADY_HAS_ISLAND: plugin.getMessages().send(player, "already-have-island"); break;
+                        case ALREADY_CREATING: plugin.getMessages().send(player, "creating-in-progress"); break;
+                        case INVALID_SCHEMATIC: plugin.getMessages().send(player, "create-failed"); break;
+                        default: plugin.getMessages().send(player, "create-failed"); break;
+                    }
+                }));
     }
 
     /** Oyuncu giriş yaptığında bekleyen (çapraz sunucu) ışınlanmayı tamamlamayı dener. */
@@ -212,6 +356,7 @@ public class ProxyManager {
         if (islandId == null)
             return;
 
+        debug("Gelen mesaj: " + message.getType() + " (ada " + islandId + ", kaynak " + message.getOrigin() + ")");
         switch (message.getType()) {
             case ISLAND_UPDATE:
                 runAsyncSafe(() -> plugin.getIslandManager().reloadIsland(islandId));
@@ -234,5 +379,9 @@ public class ProxyManager {
 
     private String pendingKey(UUID playerId) {
         return channel + ":pending:" + playerId;
+    }
+
+    private String createKey(UUID playerId) {
+        return channel + ":pending-create:" + playerId;
     }
 }

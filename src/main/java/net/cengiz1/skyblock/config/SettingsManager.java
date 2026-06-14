@@ -1,6 +1,9 @@
 package net.cengiz1.skyblock.config;
 
 import net.cengiz1.skyblock.SkyblockPlugin;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
@@ -18,6 +21,15 @@ public class SettingsManager {
     private int islandDistance;
     private int islandSize;
     private boolean borderEnabled;
+    private String borderColor;
+
+    // Genel spawn (ada silinince / spawn'a dönüşte). Proxy ve proxysiz sistemde geçerli.
+    private String spawnWorld;
+    private double spawnX;
+    private double spawnY;
+    private double spawnZ;
+    private float spawnYaw;
+    private float spawnPitch;
 
     private int maxConcurrentCreations;
     private int creationThreads;
@@ -41,7 +53,7 @@ public class SettingsManager {
     private boolean proxyDebug;
     private String proxyServerName;
     private String proxySpawnServer;
-    private String proxyCreateServer;
+    private List<String> proxyCreateServers = new ArrayList<>();
     private int proxyPendingSeconds;
     private String proxyRedisHost;
     private int proxyRedisPort;
@@ -62,6 +74,15 @@ public class SettingsManager {
         this.islandHeight = config.getInt("world.island-height", 100);
         this.islandDistance = config.getInt("world.island-distance", 250);
         this.islandSize = config.getInt("world.island-size", 100);
+        this.borderEnabled = config.getBoolean("border.enabled", true);
+        this.borderColor = config.getString("border.color", "BLUE").toUpperCase();
+
+        this.spawnWorld = config.getString("spawn.world", "");
+        this.spawnX = config.getDouble("spawn.x", 0.5);
+        this.spawnY = config.getDouble("spawn.y", 100);
+        this.spawnZ = config.getDouble("spawn.z", 0.5);
+        this.spawnYaw = (float) config.getDouble("spawn.yaw", 0);
+        this.spawnPitch = (float) config.getDouble("spawn.pitch", 0);
 
         this.maxConcurrentCreations = Math.max(1, config.getInt("creation.max-concurrent", 3));
         this.creationThreads = Math.max(1, config.getInt("creation.threads", 3));
@@ -91,8 +112,16 @@ public class SettingsManager {
         this.useSsl = config.getBoolean("storage.mysql.ssl", false);
 
         this.proxyEnabled = config.getBoolean("proxy.enabled", false);
+        this.proxyDebug = config.getBoolean("proxy.debug", false);
         this.proxyServerName = config.getString("proxy.server-name", "skyblock-1");
         this.proxySpawnServer = config.getString("proxy.spawn-server", "spawn-1");
+        // create-servers liste olarak; eski tekil 'create-server' anahtarı da desteklenir.
+        this.proxyCreateServers = new ArrayList<>(config.getStringList("proxy.create-servers"));
+        if (this.proxyCreateServers.isEmpty()) {
+            String single = config.getString("proxy.create-server", "");
+            if (single != null && !single.isEmpty())
+                this.proxyCreateServers.add(single);
+        }
         this.proxyPendingSeconds = Math.max(5, config.getInt("proxy.pending-teleport-seconds", 30));
         this.proxyRedisHost = config.getString("proxy.redis.host", "localhost");
         this.proxyRedisPort = config.getInt("proxy.redis.port", 6379);
@@ -116,6 +145,24 @@ public class SettingsManager {
 
     public int getIslandSize() {
         return islandSize;
+    }
+
+    public boolean isBorderEnabled() {
+        return borderEnabled;
+    }
+
+    public String getBorderColor() {
+        return borderColor;
+    }
+
+    /** Yapılandırılmış genel spawn konumu; dünya tanımsız/bulunamazsa null. */
+    public Location getSpawnLocation() {
+        if (spawnWorld == null || spawnWorld.isEmpty())
+            return null;
+        World world = Bukkit.getWorld(spawnWorld);
+        if (world == null)
+            return null;
+        return new Location(world, spawnX, spawnY, spawnZ, spawnYaw, spawnPitch);
     }
 
     public int getMaxConcurrentCreations() {
@@ -180,12 +227,20 @@ public class SettingsManager {
         return proxyEnabled;
     }
 
+    public boolean isProxyDebug() {
+        return proxyDebug;
+    }
+
     public String getProxyServerName() {
         return proxyServerName;
     }
 
     public String getProxySpawnServer() {
         return proxySpawnServer;
+    }
+
+    public List<String> getProxyCreateServers() {
+        return proxyCreateServers;
     }
 
     public int getProxyPendingSeconds() {

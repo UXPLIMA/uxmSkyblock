@@ -7,6 +7,7 @@ import net.cengiz1.skyblock.economy.EconomyHook;
 import net.cengiz1.skyblock.economy.NoEconomyHook;
 import net.cengiz1.skyblock.economy.VaultEconomyHook;
 import net.cengiz1.skyblock.invite.InviteManager;
+import net.cengiz1.skyblock.island.BorderManager;
 import net.cengiz1.skyblock.island.IslandManager;
 import net.cengiz1.skyblock.island.IslandTimeTask;
 import net.cengiz1.skyblock.island.RoleManager;
@@ -82,6 +83,11 @@ public final class SkyblockPlugin extends JavaPlugin {
                 new BlockTrackListener(this, this.islandManager, this.blockValueManager, this.levelManager), this);
         getServer().getPluginManager().registerEvents(
                 new UpgradeEffectListener(this.islandManager, this.upgradeManager), this);
+
+        // Ada sınırı (border) — oyuncuya özel WorldBorder.
+        BorderManager borderManager = new BorderManager(this, this.islandManager);
+        this.islandManager.setBorderManager(borderManager);
+        getServer().getPluginManager().registerEvents(borderManager, this);
 
         // Proxy modülü (sunucular arası senkron). config'de proxy.enabled: false ise pasif kalır.
         this.proxyManager = new ProxyManager(this);

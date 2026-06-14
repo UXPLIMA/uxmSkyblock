@@ -40,6 +40,8 @@ public class IslandManager {
     private ProxyManager proxyManager;
     // Bu backend sunucunun adı (proxy açıkken). null = proxy kapalı, tüm adalar yerel.
     private String localServerName;
+    // Ada sınırı yöneticisi; SkyblockPlugin tarafından bağlanır.
+    private BorderManager borderManager;
 
     public IslandManager(SkyblockPlugin plugin, SettingsManager settings, Storage storage, WorldManager worldManager) {
         this.plugin = plugin;
@@ -98,6 +100,14 @@ public class IslandManager {
 
     public void setLocalServerName(String localServerName) {
         this.localServerName = localServerName;
+    }
+
+    public void setBorderManager(BorderManager borderManager) {
+        this.borderManager = borderManager;
+    }
+
+    public BorderManager getBorderManager() {
+        return borderManager;
     }
 
     public Collection<Island> getAllIslands() {
@@ -191,12 +201,11 @@ public class IslandManager {
 
         World world = this.worldManager.getWorld();
 
-        // Adada bulunan çevrimiçi üyeleri önce güvenli yere ışınla (boşluğa düşmesinler).
-        Location safe = Bukkit.getWorlds().get(0).getSpawnLocation();
+        // Adada bulunan çevrimiçi üyeleri spawn'a ışınla (boşluğa düşmesinler).
         for (UUID id : island.getAllMemberIds()) {
             Player member = Bukkit.getPlayer(id);
             if (member != null && member.isOnline() && getIslandAt(member.getLocation()) == island)
-                member.teleport(safe);
+                teleportToSpawn(member);
         }
 
         // Tüm ada bölgesini (grid hücresini) temizle; sadece merkez platformu değil.
@@ -222,6 +231,20 @@ public class IslandManager {
         Location home = island.getHome(world);
         world.getChunkAt(home);
         player.teleport(home);
+        // Ada sınırını doğrudan uygula (olay zamanlamasına güvenme).
+        if (this.borderManager != null)
+            this.borderManager.apply(player, island);
+    }
+
+    /** Oyuncuyu spawn'a gönderir: proxy açıksa spawn sunucusuna, değilse yapılandırılmış spawn konumuna. */
+    public void teleportToSpawn(Player player) {
+        if (this.proxyManager != null && this.proxyManager.isEnabled() && this.proxyManager.sendToSpawn(player))
+            return;
+        Location spawn = settings.getSpawnLocation();
+        if (spawn == null)
+            spawn = Bukkit.getWorlds().get(0).getSpawnLocation();
+        player.setWorldBorder(null); // ada sınırını kaldır
+        player.teleport(spawn);
     }
 
     /** Adanın çevrimiçi tüm üyelerine (sahip dahil) mesaj gönderir. */

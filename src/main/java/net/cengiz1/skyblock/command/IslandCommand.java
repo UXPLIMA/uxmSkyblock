@@ -7,6 +7,7 @@ import net.cengiz1.skyblock.island.IslandPermission;
 import net.cengiz1.skyblock.island.IslandRole;
 import net.cengiz1.skyblock.proxy.ProxyManager;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -83,6 +84,8 @@ public class IslandCommand extends Command {
             case "kilit":     toggleLock(player); break;
             case "bilgi":     info(player); break;
             case "uyeler":    members(player); break;
+            case "proxy":     proxyStatus(player); break;
+            case "anaspawn":  setGlobalSpawn(player); break;
             case "yardim":    openMenu(player, "help"); break;
             default:          plugin.getMessages().send(player, "unknown-subcommand"); break;
         }
@@ -173,6 +176,11 @@ public class IslandCommand extends Command {
             plugin.getMessages().send(player, "invalid-schematic", "{types}", joinTypes());
             return;
         }
+
+        // Proxy: yeni adalar başka sunucuda oluşturulacaksa oyuncuyu oraya gönder.
+        ProxyManager proxy = plugin.getProxyManager();
+        if (proxy != null && proxy.handleRemoteCreate(player, type))
+            return;
 
         plugin.getMessages().send(player, "creating");
         manager.getCreationService().create(player, type).whenComplete((result, error) ->
@@ -517,6 +525,53 @@ public class IslandCommand extends Command {
         for (Map.Entry<UUID, IslandRole> entry : island.getMembers().entrySet())
             plugin.getMessages().send(player, "members-entry",
                     "{player}", nameOf(entry.getKey()), "{role}", entry.getValue().getDisplayName());
+    }
+
+    /** Yönetici teşhis komutu: proxy modülünün durumunu gösterir. */
+    private void proxyStatus(Player player) {
+        if (!player.hasPermission("skyblock.admin")) {
+            plugin.getMessages().send(player, "no-permission");
+            return;
+        }
+        ProxyManager proxy = plugin.getProxyManager();
+        boolean enabled = proxy != null && proxy.isEnabled();
+        String server = enabled ? proxy.getServerName() : "-";
+        String createServer = "-";
+        if (enabled)
+            createServer = proxy.isLocalCreate() ? "(yerel)" : String.join(", ", proxy.getCreateServers());
+
+        Island island = plugin.getIslandManager().getByMember(player.getUniqueId());
+        String islandServer;
+        if (island == null)
+            islandServer = "(ada yok)";
+        else if (island.getServerName() == null)
+            islandServer = "(atanmamış)";
+        else
+            islandServer = island.getServerName();
+
+        plugin.getMessages().send(player, "proxy-status",
+                "{state}", enabled ? "AÇIK" : "KAPALI",
+                "{server}", server,
+                "{create}", createServer,
+                "{island}", islandServer);
+    }
+
+    /** Yönetici: genel spawn'ı (ada silinince ışınlanılacak nokta) bulunduğun yere ayarlar. */
+    private void setGlobalSpawn(Player player) {
+        if (!player.hasPermission("skyblock.admin")) {
+            plugin.getMessages().send(player, "no-permission");
+            return;
+        }
+        Location loc = player.getLocation();
+        plugin.getConfig().set("spawn.world", loc.getWorld().getName());
+        plugin.getConfig().set("spawn.x", loc.getX());
+        plugin.getConfig().set("spawn.y", loc.getY());
+        plugin.getConfig().set("spawn.z", loc.getZ());
+        plugin.getConfig().set("spawn.yaw", (double) loc.getYaw());
+        plugin.getConfig().set("spawn.pitch", (double) loc.getPitch());
+        plugin.saveConfig();
+        plugin.getSettings().reload();
+        plugin.getMessages().send(player, "global-spawn-set");
     }
 
     // ───────────── Yardımcılar ─────────────

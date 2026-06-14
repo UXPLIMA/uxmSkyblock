@@ -142,6 +142,9 @@ public class IslandCreationService {
                             Location home = island.getHome(world);
                             world.getChunkAt(home);
                             online.teleport(home);
+                            // Ada sınırını oluşturmada doğrudan uygula.
+                            if (islandManager.getBorderManager() != null)
+                                islandManager.getBorderManager().apply(online, island);
                         }
                         result.complete(Result.SUCCESS);
                     } catch (Throwable error) {

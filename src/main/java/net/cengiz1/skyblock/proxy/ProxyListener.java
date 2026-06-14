@@ -19,6 +19,6 @@ public class ProxyListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
-        proxyManager.tryCompletePendingTeleport(event.getPlayer());
+        proxyManager.onPlayerJoin(event.getPlayer());
     }
 }

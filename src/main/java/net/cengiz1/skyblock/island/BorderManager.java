@@ -102,12 +102,33 @@ public class BorderManager implements Listener {
         }
     }
 
-    private void apply(Player player, Island island) {
+    /** Bir adanın sınırını oyuncuya uygular ve önbelleği günceller. (Işınlama/oluşturmadan da çağrılır.) */
+    public void apply(Player player, Island island) {
+        if (!plugin.getSettings().isBorderEnabled())
+            return;
+        this.lastIsland.put(player.getUniqueId(), island.getUniqueId());
+
+        double size = this.islandManager.getProtectionHalf(island) * 2.0 + 1.0;
+
         WorldBorder border = Bukkit.createWorldBorder();
         border.setCenter(island.getCenterX() + 0.5, island.getCenterZ() + 0.5);
-        border.setSize(this.islandManager.getProtectionHalf(island) * 2L + 1);
+        border.setSize(size);
         border.setWarningDistance(0);
         border.setWarningTime(0);
+
+        // Renk: vanilla WorldBorder rengi büyüme/küçülme durumundan gelir.
+        // YEŞİL = çok yavaş büyür, KIRMIZI = çok yavaş küçülür, MAVİ = sabit.
+        switch (plugin.getSettings().getBorderColor()) {
+            case "GREEN":
+                border.setSize(size + 10.0, 9_999_999L);
+                break;
+            case "RED":
+                border.setSize(Math.max(3.0, size - 10.0), 9_999_999L);
+                break;
+            default: // BLUE / sabit
+                break;
+        }
+
         player.setWorldBorder(border);
     }
 }

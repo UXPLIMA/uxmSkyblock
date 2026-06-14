@@ -168,6 +168,9 @@ public class UpgradeManager {
 
         island.setUpgradeLevel(key, next.getLevel());
         plugin.getIslandManager().saveAsync(island);
+        // Boyut yükseltmesi ada sınırını büyütür; açık üyelere yeniden uygula.
+        if (key.equalsIgnoreCase("size") && plugin.getIslandManager().getBorderManager() != null)
+            plugin.getIslandManager().getBorderManager().refresh(island);
         return PurchaseResult.SUCCESS;
     }
 

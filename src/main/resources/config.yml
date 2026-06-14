@@ -13,6 +13,24 @@ world:
 # Oyuncu adaya girince ada sınırını gösteren (kişiye özel) bir dünya sınırı çizer.
 border:
   enabled: true
+  # Sınır rengi: BLUE (sabit/mavi), GREEN (yeşil) veya RED (kırmızı).
+  color: BLUE
+
+# ───────────── GENEL SPAWN ─────────────
+# Ada silinince (ve spawn'a dönüşte) oyuncunun ışınlanacağı nokta.
+# Hem proxy hem proxysiz sistemde geçerlidir.
+#  - Proxy AÇIKSA ve proxy.spawn-server bu sunucudan farklıysa: oyuncu önce o
+#    sunucuya gönderilir (oradaki spawn'a düşer); aşağıdaki koordinat kullanılmaz.
+#  - Proxy KAPALIYSA (veya spawn-server bu sunucuysa): aşağıdaki koordinata ışınlar.
+# world boş ("") ise ana dünyanın spawn'ı kullanılır.
+# Kolay yol: gitmesini istediğin yere gidip /ada anaspawn yaz.
+spawn:
+  world: ""
+  x: 0.5
+  y: 100
+  z: 0.5
+  yaw: 0
+  pitch: 0
 
 creation:
   max-concurrent: 3
@@ -55,6 +73,7 @@ command:
     bilgi: ["bilgi", "info"]
     uyeler: ["üyeler", "uyeler", "members"]
     proxy: ["proxy", "durum"]
+    anaspawn: ["anaspawn", "genelspawn", "setanaspawn"]
     yardim: ["yardım", "yardim", "help", "?"]
   # Davetlerin geçerlilik süresi (saniye).
   invite-expire-seconds: 120
@@ -129,12 +148,15 @@ proxy:
   # Spawn/lobi sunucusunun adı (ileride dönüş yönlendirmeleri için).
   spawn-server: "spawn-1"
 
-  # Yeni adaların oluşturulacağı skyblock backend sunucusunun adı.
-  # Oyuncu BAŞKA bir sunucudayken (ör. spawn/lobi) /ada oluştur derse,
-  # önce bu sunucuya gönderilir ve ada ORADA oluşturulur.
-  # - Boş ("") bırakılırsa ada, komutun çalıştığı sunucuda oluşturulur.
-  # - Bu sunucunun server-name'i ile aynıysa yine yerel oluşturulur.
-  create-server: "skyblock-1"
+  # Yeni adaların oluşturulabileceği skyblock backend sunucularının LİSTESİ.
+  # Oyuncu BAŞKA bir sunucudayken (ör. spawn/lobi) /ada oluştur derse, listedeki
+  # EN AZ adası olan sunucuya gönderilir ve ada ORADA oluşturulur (dengeli dağıtım).
+  # - Liste boşsa ada, komutun çalıştığı sunucuda oluşturulur.
+  # - Bu sunucunun server-name'i listedeyse, oyuncu burada oluşturursa yerel kalır.
+  # Yeni skyblock sunucusu eklemek için sadece adını bu listeye yaz (skyblock-2, 3, 4...).
+  create-servers:
+    - "skyblock-1"
+    - "skyblock-2"
 
   # Oyuncu başka sunucuya gönderildikten sonra ışınlanma/oluşturma kaydının
   # geçerli kalacağı süre (saniye).

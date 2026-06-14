@@ -31,8 +31,11 @@ messages:
   visit-locked: "&cBu ada ziyaretçilere kapalı."
   visit-banned: "&cBu adadan yasaklandın."
   proxy-sending: "&7Adanın bulunduğu sunucuya (&e{server}&7) gönderiliyorsun..."
+  proxy-creating: "&7Adan &e{server}&7 sunucusunda oluşturulacak; oraya gönderiliyorsun..."
+  proxy-status: "&8» &7Proxy: &e{state} &8| &7Sunucu: &e{server} &8| &7Oluşturma: &e{create} &8| &7Adanın sunucusu: &e{island}"
   must-be-on-island: "&cBunun için adanın içinde olmalısın."
   spawn-set: "&aAda spawn noktası ayarlandı."
+  global-spawn-set: "&aGenel spawn (ada silinince ışınlanılacak nokta) bulunduğun yere ayarlandı."
 
   # Seviye
   level-up: "&aTebrikler! Adan &e{level}. &aseviyeye yükseldi!"
