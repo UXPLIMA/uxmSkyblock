@@ -12,6 +12,7 @@ import net.cengiz1.skyblock.island.IslandManager;
 import net.cengiz1.skyblock.island.IslandTimeTask;
 import net.cengiz1.skyblock.island.RoleManager;
 import net.cengiz1.skyblock.island.VisitService;
+import net.cengiz1.skyblock.island.WarpService;
 import net.cengiz1.skyblock.level.BlockValueManager;
 import net.cengiz1.skyblock.level.LevelManager;
 import net.cengiz1.skyblock.listener.ListenerRegistrar;
@@ -38,6 +39,7 @@ public final class SkyblockPlugin extends JavaPlugin {
     private RoleManager roleManager;
     private InviteManager inviteManager;
     private VisitService visitService;
+    private WarpService warpService;
     private EconomyHook economy;
     private ProxyManager proxyManager;
 
@@ -75,6 +77,7 @@ public final class SkyblockPlugin extends JavaPlugin {
         this.roleManager = new RoleManager(this);
         this.inviteManager = new InviteManager(this.settings.getInviteExpireSeconds());
         this.visitService = new VisitService(this);
+        this.warpService = new WarpService(this);
 
         this.economy = setupEconomy();
         this.upgradeManager = new UpgradeManager(this);
@@ -177,6 +180,10 @@ public final class SkyblockPlugin extends JavaPlugin {
 
     public VisitService getVisitService() {
         return visitService;
+    }
+
+    public WarpService getWarpService() {
+        return warpService;
     }
 
     public EconomyHook getEconomy() {

@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 public class MenuManager {
 
     private static final String[] DEFAULT_MENUS = {
-            "main.yml", "settings.yml", "upgrades.yml", "help.yml", "delete-confirm.yml"
+            "main.yml", "settings.yml", "upgrades.yml", "help.yml", "delete-confirm.yml", "warp.yml"
     };
 
     private static final Pattern FLAG_PATTERN = Pattern.compile("\\{flag_([a-zA-Z_]+)\\}");
@@ -148,6 +148,9 @@ public class MenuManager {
         if (definition.getType().equals("warp"))
             populateWarp(definition, inventory, holder);
 
+        if (definition.getType().equals("warps"))
+            populateWarps(definition, inventory, holder);
+
         player.openInventory(inventory);
     }
 
@@ -171,6 +174,29 @@ public class MenuManager {
             Island island = islands.get(index);
             inventory.setItem(slot, buildHead(definition, island));
             holder.getActions().put(slot, "visit:" + island.getOwner());
+        }
+    }
+
+    private void populateWarps(MenuDefinition definition, Inventory inventory, MenuHolder holder) {
+        List<Integer> slots = definition.getHeadSlots();
+        if (slots.isEmpty())
+            return;
+
+        List<Island> islands = plugin.getWarpService().getWarps();
+        int perPage = slots.size();
+        int pageCount = Math.max(1, (int) Math.ceil(islands.size() / (double) perPage));
+        int page = Math.min(holder.getPage(), pageCount - 1);
+        holder.setPageCount(pageCount);
+
+        int start = page * perPage;
+        for (int i = 0; i < perPage; i++) {
+            int index = start + i;
+            int slot = slots.get(i);
+            if (slot < 0 || slot >= inventory.getSize() || index >= islands.size())
+                continue;
+            Island island = islands.get(index);
+            inventory.setItem(slot, buildHead(definition, island));
+            holder.getActions().put(slot, "warpto:" + island.getOwner());
         }
     }
 
@@ -280,6 +306,10 @@ public class MenuManager {
             handleVisit(player, action.substring(6).trim());
             return;
         }
+        if (lower.startsWith("warpto:")) {
+            handleWarpTo(player, action.substring(7).trim());
+            return;
+        }
         if (lower.startsWith("command:")) {
             player.closeInventory();
             player.performCommand(action.substring(8).trim());
@@ -320,6 +350,17 @@ public class MenuManager {
         }
         player.closeInventory();
         plugin.getVisitService().visitOwner(player, ownerId);
+    }
+
+    private void handleWarpTo(Player player, String ownerRaw) {
+        UUID ownerId;
+        try {
+            ownerId = UUID.fromString(ownerRaw);
+        } catch (IllegalArgumentException error) {
+            return;
+        }
+        player.closeInventory();
+        plugin.getWarpService().warpToOwner(player, ownerId);
     }
 
     private void handleDelete(Player player, MenuHolder holder) {

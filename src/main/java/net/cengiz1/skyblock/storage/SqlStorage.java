@@ -61,6 +61,12 @@ public class SqlStorage implements Storage {
         addColumnIfMissing("banned", "TEXT");
         addColumnIfMissing("upgrades", "TEXT");
         addColumnIfMissing("server", "VARCHAR(64)");
+        addColumnIfMissing("has_warp", "INT");
+        addColumnIfMissing("warp_x", "DOUBLE");
+        addColumnIfMissing("warp_y", "DOUBLE");
+        addColumnIfMissing("warp_z", "DOUBLE");
+        addColumnIfMissing("warp_yaw", "FLOAT");
+        addColumnIfMissing("warp_pitch", "FLOAT");
     }
 
     private void addColumnIfMissing(String column, String type) {
@@ -152,6 +158,13 @@ public class SqlStorage implements Storage {
         island.loadBanned(result.getString("banned"));
         island.loadUpgrades(result.getString("upgrades"));
         island.setServerNameRaw(result.getString("server"));
+        island.setWarpRaw(
+                result.getInt("has_warp") == 1,
+                result.getDouble("warp_x"),
+                result.getDouble("warp_y"),
+                result.getDouble("warp_z"),
+                result.getFloat("warp_yaw"),
+                result.getFloat("warp_pitch"));
 
         island.markClean();
         return island;
@@ -161,11 +174,13 @@ public class SqlStorage implements Storage {
     public synchronized void save(Island island) {
         String columns = "uuid, owner, world, grid_index, center_x, center_y, center_z, " +
                 "home_x, home_y, home_z, home_yaw, home_pitch, flags, " +
-                "name, locked, island_time, points, level, members, banned, upgrades, server";
-        String placeholders = "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?";
+                "name, locked, island_time, points, level, members, banned, upgrades, server, " +
+                "has_warp, warp_x, warp_y, warp_z, warp_yaw, warp_pitch";
+        String placeholders = "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?";
         String updateAssignments = "owner=?, world=?, grid_index=?, center_x=?, center_y=?, center_z=?, " +
                 "home_x=?, home_y=?, home_z=?, home_yaw=?, home_pitch=?, flags=?, " +
-                "name=?, locked=?, island_time=?, points=?, level=?, members=?, banned=?, upgrades=?, server=?";
+                "name=?, locked=?, island_time=?, points=?, level=?, members=?, banned=?, upgrades=?, server=?, " +
+                "has_warp=?, warp_x=?, warp_y=?, warp_z=?, warp_yaw=?, warp_pitch=?";
 
         String sql = this.mysql
                 ? "INSERT INTO islands (" + columns + ") VALUES (" + placeholders + ") " +
@@ -210,6 +225,12 @@ public class SqlStorage implements Storage {
         statement.setString(i++, island.serializeBanned());
         statement.setString(i++, island.serializeUpgrades());
         statement.setString(i++, island.getServerName());
+        statement.setInt(i++, island.hasWarp() ? 1 : 0);
+        statement.setDouble(i++, island.getWarpX());
+        statement.setDouble(i++, island.getWarpY());
+        statement.setDouble(i++, island.getWarpZ());
+        statement.setFloat(i++, island.getWarpYaw());
+        statement.setFloat(i++, island.getWarpPitch());
         return i;
     }
 
