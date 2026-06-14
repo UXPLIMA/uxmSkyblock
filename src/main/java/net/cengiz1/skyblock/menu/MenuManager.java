@@ -31,12 +31,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MenuManager {
 
     private static final String[] DEFAULT_MENUS = {
             "main.yml", "settings.yml", "upgrades.yml", "help.yml", "delete-confirm.yml"
     };
+
+    private static final Pattern FLAG_PATTERN = Pattern.compile("\\{flag_([a-zA-Z_]+)\\}");
 
     private final SkyblockPlugin plugin;
     private final IslandManager islandManager;
@@ -461,13 +465,30 @@ public class MenuManager {
         double next = island != null ? plugin.getLevelManager().pointsForNextLevel(island.getLevel()) : -1;
         result = result.replace("{next_points}", next < 0 ? "MAX" : formatNumber(next));
 
+        result = replaceFlags(result, island);
+        return Placeholders.apply(player, result);
+    }
+
+    private String replaceFlags(String text, Island island) {
+        if (text.indexOf('{') < 0)
+            return text;
         String flagOn = plugin.getMessages().get("flag-on");
         String flagOff = plugin.getMessages().get("flag-off");
-        for (IslandFlag flag : IslandFlag.values()) {
-            boolean value = island != null ? island.getFlag(flag) : flag.getDefault();
-            result = result.replace("{flag_" + flag.name().toLowerCase() + "}", value ? flagOn : flagOff);
+        Matcher matcher = FLAG_PATTERN.matcher(text);
+        StringBuffer buffer = new StringBuffer();
+        while (matcher.find()) {
+            IslandFlag flag = IslandFlag.fromString(matcher.group(1));
+            String replacement;
+            if (flag != null) {
+                boolean value = island != null ? island.getFlag(flag) : flag.getDefault();
+                replacement = value ? flagOn : flagOff;
+            } else {
+                replacement = matcher.group(0);
+            }
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(replacement));
         }
-        return Placeholders.apply(player, result);
+        matcher.appendTail(buffer);
+        return buffer.toString();
     }
 
     private String applyHead(String text, OfflinePlayer owner, Island island) {

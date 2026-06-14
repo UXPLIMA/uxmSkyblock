@@ -97,6 +97,7 @@ public final class SkyblockPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        CommandRegistrar.unregister(this);
         if (this.proxyManager != null)
             this.proxyManager.stop();
         if (this.islandManager != null)
