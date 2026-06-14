@@ -5,6 +5,7 @@ import net.cengiz1.skyblock.config.SettingsManager;
 import net.cengiz1.skyblock.schematic.FaweSchematicService;
 import net.cengiz1.skyblock.schematic.SchematicService;
 import net.cengiz1.skyblock.storage.Storage;
+import net.cengiz1.skyblock.upgrade.UpgradeManager;
 import net.cengiz1.skyblock.world.WorldManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -30,6 +31,9 @@ public class IslandManager {
 
     private final Map<UUID, Island> islandsById = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> ownerToIsland = new ConcurrentHashMap<>();
+
+    // Boyut yükseltmesi için; SkyblockPlugin tarafından sonradan bağlanır.
+    private UpgradeManager upgradeManager;
 
     public IslandManager(SkyblockPlugin plugin, SettingsManager settings, Storage storage, WorldManager worldManager) {
         this.plugin = plugin;
@@ -74,16 +78,28 @@ public class IslandManager {
         return this.islandsById.get(islandId);
     }
 
+    public void setUpgradeManager(UpgradeManager upgradeManager) {
+        this.upgradeManager = upgradeManager;
+    }
+
+    /** Adanın etkin koruma yarıçapı (boyut yükseltmesine göre). */
+    public int getProtectionHalf(Island island) {
+        double size = this.upgradeManager != null
+                ? this.upgradeManager.getValue(island, "size", settings.getIslandSize())
+                : settings.getIslandSize();
+        return (int) Math.max(1, size / 2);
+    }
+
     public Island getIslandAt(Location location) {
         if (location.getWorld() == null)
             return null;
 
         String worldName = location.getWorld().getName();
-        int half = settings.getIslandSize() / 2;
 
         for (Island island : this.islandsById.values()) {
             if (!island.getWorldName().equals(worldName))
                 continue;
+            int half = getProtectionHalf(island);
             if (Math.abs(location.getBlockX() - island.getCenterX()) <= half &&
                     Math.abs(location.getBlockZ() - island.getCenterZ()) <= half)
                 return island;
@@ -112,6 +128,15 @@ public class IslandManager {
         Location home = island.getHome(world);
         world.getChunkAt(home);
         player.teleport(home);
+    }
+
+    /** Adanın çevrimiçi tüm üyelerine (sahip dahil) mesaj gönderir. */
+    public void messageMembers(Island island, String messageKey, String... replacements) {
+        for (UUID id : island.getAllMemberIds()) {
+            Player member = Bukkit.getPlayer(id);
+            if (member != null && member.isOnline())
+                plugin.getMessages().send(member, messageKey, replacements);
+        }
     }
 
     void buildDefaultPlatform(World world, int centerX, int centerY, int centerZ) {

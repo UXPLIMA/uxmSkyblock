@@ -142,6 +142,11 @@ public class Island {
         this.dirty = true;
     }
 
+    /** Storage yüklemesi için: dirty işaretlemeden ayarlar. */
+    public void setNameRaw(String name) {
+        this.name = name;
+    }
+
     public boolean isLocked() {
         return locked;
     }
@@ -151,6 +156,10 @@ public class Island {
         this.dirty = true;
     }
 
+    public void setLockedRaw(boolean locked) {
+        this.locked = locked;
+    }
+
     public IslandTime getTime() {
         return time;
     }
@@ -158,6 +167,10 @@ public class Island {
     public void setTime(IslandTime time) {
         this.time = time == null ? IslandTime.NORMAL : time;
         this.dirty = true;
+    }
+
+    public void setTimeRaw(IslandTime time) {
+        this.time = time == null ? IslandTime.NORMAL : time;
     }
 
     // ----- Level / puan -----
@@ -171,6 +184,10 @@ public class Island {
         this.dirty = true;
     }
 
+    public void setPointsRaw(double points) {
+        this.points = Math.max(0, points);
+    }
+
     public void addPoints(double amount) {
         setPoints(this.points + amount);
     }
@@ -182,6 +199,10 @@ public class Island {
     public void setLevel(int level) {
         this.level = Math.max(0, level);
         this.dirty = true;
+    }
+
+    public void setLevelRaw(int level) {
+        this.level = Math.max(0, level);
     }
 
     // ----- Bayraklar (ada ayarları) -----

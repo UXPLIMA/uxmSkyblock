@@ -1,13 +1,64 @@
+# ╔══════════════════════════════════════════════════════════════╗
+# ║  SKYBLOCK ANA AYARLARI                                          ║
+# ╚══════════════════════════════════════════════════════════════╝
+
 world:
   name: islands
   island-height: 100
   island-distance: 250
+  # Varsayılan ada boyutu (boyut yükseltmesi yoksa kullanılır).
   island-size: 100
 
 creation:
   max-concurrent: 3
   threads: 3
 
+# ───────────── KOMUT ─────────────
+# Ana komut adı ve alias'ları config'den ayarlanabilir.
+# Alt komut alias'ları da burada; soldaki anahtar sabit (kod tarafı),
+# sağdaki liste oyuncunun yazabileceği kelimelerdir.
+command:
+  name: ada
+  aliases:
+    - is
+    - sb
+    - island
+    - sky
+  subcommands:
+    menu: ["menu"]
+    git: ["git", "go", "tp", "ışınlan", "home"]
+    olustur: ["oluştur", "olustur", "create", "kur"]
+    sil: ["sil", "delete", "kaldır"]
+    davet: ["davet", "invite"]
+    kabul: ["kabul", "accept"]
+    reddet: ["reddet", "deny", "ret"]
+    ayril: ["ayrıl", "ayril", "leave"]
+    at: ["at", "kick", "çıkar", "cikar"]
+    devret: ["devret", "transfer"]
+    ban: ["ban", "yasakla"]
+    unban: ["unban", "yasaklama-kaldır", "bankaldir"]
+    trust: ["trust", "güven", "guven"]
+    untrust: ["untrust"]
+    rol: ["rol", "role", "setrole"]
+    ayarlar: ["ayarlar", "settings", "ayar"]
+    yukseltme: ["yükseltme", "yukseltme", "upgrade", "yukselt"]
+    level: ["level", "seviye", "lvl"]
+    setspawn: ["setspawn", "sethome", "spawnayarla"]
+    ucus: ["uçuş", "ucus", "fly"]
+    kilit: ["kilit", "lock", "kapat"]
+    bilgi: ["bilgi", "info"]
+    uyeler: ["üyeler", "uyeler", "members"]
+    yardim: ["yardım", "yardim", "help", "?"]
+  # Davetlerin geçerlilik süresi (saniye).
+  invite-expire-seconds: 120
+
+# ───────────── EKONOMI ─────────────
+economy:
+  # Yükseltmelerde 'required-money' (Vault parası) şartı aransın mı?
+  # Vault yoksa otomatik kapanır ve sadece seviye şartı geçerli olur.
+  enabled: true
+
+# ───────────── ŞEMATİKLER ─────────────
 schematics:
   default: classic
   list:
@@ -26,6 +77,7 @@ schematics:
         y: 5.0
         z: 0.5
 
+# ───────────── VERİTABANI ─────────────
 storage:
   type: sqlite
   mysql:

@@ -3,6 +3,7 @@ package net.cengiz1.skyblock.storage;
 import net.cengiz1.skyblock.SkyblockPlugin;
 import net.cengiz1.skyblock.config.SettingsManager;
 import net.cengiz1.skyblock.island.Island;
+import net.cengiz1.skyblock.island.IslandTime;
 
 import java.io.File;
 import java.sql.Connection;
@@ -49,7 +50,16 @@ public class SqlStorage implements Storage {
                         "flags TEXT)")) {
             statement.executeUpdate();
         }
+        // Sonradan eklenen sütunlar (eski tablolar için geriye dönük uyumluluk).
         addColumnIfMissing("flags", "TEXT");
+        addColumnIfMissing("name", "VARCHAR(64)");
+        addColumnIfMissing("locked", "INT");
+        addColumnIfMissing("island_time", "VARCHAR(32)");
+        addColumnIfMissing("points", "DOUBLE");
+        addColumnIfMissing("level", "INT");
+        addColumnIfMissing("members", "TEXT");
+        addColumnIfMissing("banned", "TEXT");
+        addColumnIfMissing("upgrades", "TEXT");
     }
 
     private void addColumnIfMissing(String column, String type) {
@@ -57,6 +67,7 @@ public class SqlStorage implements Storage {
                 "ALTER TABLE islands ADD COLUMN " + column + " " + type)) {
             statement.executeUpdate();
         } catch (SQLException ignored) {
+            // Sütun zaten varsa hata fırlatır; görmezden geliyoruz.
         }
     }
 
@@ -108,6 +119,16 @@ public class SqlStorage implements Storage {
                         result.getFloat("home_yaw"),
                         result.getFloat("home_pitch"));
                 island.loadFlags(result.getString("flags"));
+
+                island.setNameRaw(result.getString("name"));
+                island.setLockedRaw(result.getInt("locked") == 1);
+                island.setTimeRaw(IslandTime.fromString(result.getString("island_time")));
+                island.setPointsRaw(result.getDouble("points"));
+                island.setLevelRaw(result.getInt("level"));
+                island.loadMembers(result.getString("members"));
+                island.loadBanned(result.getString("banned"));
+                island.loadUpgrades(result.getString("upgrades"));
+
                 island.markClean();
                 islands.add(island);
             }
@@ -119,47 +140,58 @@ public class SqlStorage implements Storage {
 
     @Override
     public synchronized void save(Island island) {
+        String columns = "uuid, owner, world, grid_index, center_x, center_y, center_z, " +
+                "home_x, home_y, home_z, home_yaw, home_pitch, flags, " +
+                "name, locked, island_time, points, level, members, banned, upgrades";
+        String placeholders = "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?";
+        String updateAssignments = "owner=?, world=?, grid_index=?, center_x=?, center_y=?, center_z=?, " +
+                "home_x=?, home_y=?, home_z=?, home_yaw=?, home_pitch=?, flags=?, " +
+                "name=?, locked=?, island_time=?, points=?, level=?, members=?, banned=?, upgrades=?";
+
         String sql = this.mysql
-                ? "INSERT INTO islands (uuid, owner, world, grid_index, center_x, center_y, center_z, home_x, home_y, home_z, home_yaw, home_pitch, flags) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE " +
-                "owner=?, world=?, grid_index=?, center_x=?, center_y=?, center_z=?, home_x=?, home_y=?, home_z=?, home_yaw=?, home_pitch=?, flags=?"
-                : "INSERT INTO islands (uuid, owner, world, grid_index, center_x, center_y, center_z, home_x, home_y, home_z, home_yaw, home_pitch, flags) " +
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(uuid) DO UPDATE SET " +
-                "owner=?, world=?, grid_index=?, center_x=?, center_y=?, center_z=?, home_x=?, home_y=?, home_z=?, home_yaw=?, home_pitch=?, flags=?";
+                ? "INSERT INTO islands (" + columns + ") VALUES (" + placeholders + ") " +
+                "ON DUPLICATE KEY UPDATE " + updateAssignments
+                : "INSERT INTO islands (" + columns + ") VALUES (" + placeholders + ") " +
+                "ON CONFLICT(uuid) DO UPDATE SET " + updateAssignments;
 
         try (PreparedStatement statement = connection().prepareStatement(sql)) {
-            statement.setString(1, island.getUniqueId().toString());
-            statement.setString(2, island.getOwner().toString());
-            statement.setString(3, island.getWorldName());
-            statement.setInt(4, island.getGridIndex());
-            statement.setInt(5, island.getCenterX());
-            statement.setInt(6, island.getCenterY());
-            statement.setInt(7, island.getCenterZ());
-            statement.setDouble(8, island.getHomeX());
-            statement.setDouble(9, island.getHomeY());
-            statement.setDouble(10, island.getHomeZ());
-            statement.setFloat(11, island.getHomeYaw());
-            statement.setFloat(12, island.getHomePitch());
-            statement.setString(13, island.serializeFlags());
-
-            statement.setString(14, island.getOwner().toString());
-            statement.setString(15, island.getWorldName());
-            statement.setInt(16, island.getGridIndex());
-            statement.setInt(17, island.getCenterX());
-            statement.setInt(18, island.getCenterY());
-            statement.setInt(19, island.getCenterZ());
-            statement.setDouble(20, island.getHomeX());
-            statement.setDouble(21, island.getHomeY());
-            statement.setDouble(22, island.getHomeZ());
-            statement.setFloat(23, island.getHomeYaw());
-            statement.setFloat(24, island.getHomePitch());
-            statement.setString(25, island.serializeFlags());
+            int i = 1;
+            // INSERT bölümü
+            statement.setString(i++, island.getUniqueId().toString());
+            i = bindCommon(statement, island, i);
+            // UPDATE bölümü (uuid hariç)
+            bindCommon(statement, island, i);
 
             statement.executeUpdate();
             island.markClean();
         } catch (SQLException error) {
             plugin.getLogger().warning("Could not save island " + island.getUniqueId() + ": " + error.getMessage());
         }
+    }
+
+    /** owner ... upgrades sırasındaki ortak alanları bağlar, sonraki indeksi döner. */
+    private int bindCommon(PreparedStatement statement, Island island, int i) throws SQLException {
+        statement.setString(i++, island.getOwner().toString());
+        statement.setString(i++, island.getWorldName());
+        statement.setInt(i++, island.getGridIndex());
+        statement.setInt(i++, island.getCenterX());
+        statement.setInt(i++, island.getCenterY());
+        statement.setInt(i++, island.getCenterZ());
+        statement.setDouble(i++, island.getHomeX());
+        statement.setDouble(i++, island.getHomeY());
+        statement.setDouble(i++, island.getHomeZ());
+        statement.setFloat(i++, island.getHomeYaw());
+        statement.setFloat(i++, island.getHomePitch());
+        statement.setString(i++, island.serializeFlags());
+        statement.setString(i++, island.getName());
+        statement.setInt(i++, island.isLocked() ? 1 : 0);
+        statement.setString(i++, island.getTime().name());
+        statement.setDouble(i++, island.getPoints());
+        statement.setInt(i++, island.getLevel());
+        statement.setString(i++, island.serializeMembers());
+        statement.setString(i++, island.serializeBanned());
+        statement.setString(i++, island.serializeUpgrades());
+        return i;
     }
 
     @Override

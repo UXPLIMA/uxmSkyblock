@@ -1,7 +1,13 @@
 package net.cengiz1.skyblock.config;
 
 import net.cengiz1.skyblock.SkyblockPlugin;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SettingsManager {
 
@@ -14,6 +20,12 @@ public class SettingsManager {
 
     private int maxConcurrentCreations;
     private int creationThreads;
+
+    private String commandName;
+    private List<String> commandAliases = new ArrayList<>();
+    private Map<String, List<String>> subcommandAliases = new LinkedHashMap<>();
+    private int inviteExpireSeconds;
+    private boolean economyEnabled;
 
     private String storageType;
     private String host;
@@ -38,6 +50,22 @@ public class SettingsManager {
 
         this.maxConcurrentCreations = Math.max(1, config.getInt("creation.max-concurrent", 3));
         this.creationThreads = Math.max(1, config.getInt("creation.threads", 3));
+
+        this.commandName = config.getString("command.name", "ada").toLowerCase();
+        this.commandAliases = config.getStringList("command.aliases");
+        this.inviteExpireSeconds = Math.max(10, config.getInt("command.invite-expire-seconds", 120));
+        this.economyEnabled = config.getBoolean("economy.enabled", true);
+
+        this.subcommandAliases = new LinkedHashMap<>();
+        ConfigurationSection subs = config.getConfigurationSection("command.subcommands");
+        if (subs != null) {
+            for (String key : subs.getKeys(false)) {
+                List<String> aliases = subs.getStringList(key);
+                if (aliases.isEmpty())
+                    aliases.add(key);
+                this.subcommandAliases.put(key.toLowerCase(), aliases);
+            }
+        }
 
         this.storageType = config.getString("storage.type", "sqlite").toLowerCase();
         this.host = config.getString("storage.mysql.host", "localhost");
@@ -70,6 +98,26 @@ public class SettingsManager {
 
     public int getCreationThreads() {
         return creationThreads;
+    }
+
+    public String getCommandName() {
+        return commandName;
+    }
+
+    public List<String> getCommandAliases() {
+        return commandAliases;
+    }
+
+    public Map<String, List<String>> getSubcommandAliases() {
+        return subcommandAliases;
+    }
+
+    public int getInviteExpireSeconds() {
+        return inviteExpireSeconds;
+    }
+
+    public boolean isEconomyEnabled() {
+        return economyEnabled;
     }
 
     public String getStorageType() {
