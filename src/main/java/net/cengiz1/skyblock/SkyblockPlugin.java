@@ -17,6 +17,7 @@ import net.cengiz1.skyblock.level.BlockValueManager;
 import net.cengiz1.skyblock.level.LevelManager;
 import net.cengiz1.skyblock.listener.ListenerRegistrar;
 import net.cengiz1.skyblock.menu.MenuManager;
+import net.cengiz1.skyblock.module.ModuleManager;
 import net.cengiz1.skyblock.proxy.ProxyManager;
 import net.cengiz1.skyblock.storage.SqlStorage;
 import net.cengiz1.skyblock.storage.Storage;
@@ -42,6 +43,7 @@ public final class SkyblockPlugin extends JavaPlugin {
     private WarpService warpService;
     private EconomyHook economy;
     private ProxyManager proxyManager;
+    private ModuleManager moduleManager;
 
     @Override
     public void onEnable() {
@@ -98,11 +100,16 @@ public final class SkyblockPlugin extends JavaPlugin {
         new IslandTimeTask(this, this.islandManager, this.settings)
                 .runTaskTimer(this, 40L, 40L);
 
+        this.moduleManager = new ModuleManager(this);
+        this.moduleManager.loadModules();
+
         getLogger().info("Skyblock enabled.");
     }
 
     @Override
     public void onDisable() {
+        if (this.moduleManager != null)
+            this.moduleManager.unloadModules();
         CommandRegistrar.unregister(this);
         if (this.proxyManager != null)
             this.proxyManager.stop();
@@ -204,5 +211,9 @@ public final class SkyblockPlugin extends JavaPlugin {
 
     public ProxyManager getProxyManager() {
         return proxyManager;
+    }
+
+    public ModuleManager getModuleManager() {
+        return moduleManager;
     }
 }
