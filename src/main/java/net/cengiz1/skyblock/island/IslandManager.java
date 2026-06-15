@@ -186,6 +186,8 @@ public class IslandManager {
     }
 
     public void deleteIsland(Island island) {
+        Bukkit.getPluginManager().callEvent(new net.cengiz1.skyblock.event.IslandDeleteEvent(island));
+
         this.islandsById.remove(island.getUniqueId());
         this.ownerToIsland.remove(island.getOwner());
 

@@ -2,8 +2,19 @@
 # New keys added in plugin updates are merged into this file automatically,
 # so your existing values are kept when you upgrade.
 
+# Skyblock island system. Set to false on a server that should run ONLY a
+# module (e.g. Chunklock): the /ada (island) command, island listeners and the
+# island world stay unregistered, but core managers (economy, block values,
+# storage, proxy, module loader) keep working so modules can use them.
+island:
+  enabled: true
+
 world:
   name: islands
+  # World generator: 'void' (classic skyblock empty world) or 'normal'
+  # (real, naturally-generated terrain). Use 'normal' for the Chunklock module
+  # so islands sit on natural ground and locked chunks reveal real terrain.
+  generator: void
   island-height: 100
   island-distance: 250
   # Default island size, used when the size upgrade is not present.

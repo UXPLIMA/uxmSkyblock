@@ -76,7 +76,8 @@ public class IslandCreationService {
         if (!this.creating.add(playerId))
             return CompletableFuture.completedFuture(Result.ALREADY_CREATING);
 
-        SchematicDefinition definition = useSchematic ? schematicService.get(resolvedKey) : null;
+        boolean natural = !this.settings.isVoidWorld();
+        SchematicDefinition definition = (useSchematic && !natural) ? schematicService.get(resolvedKey) : null;
 
         CompletableFuture<Result> result = new CompletableFuture<>();
         AtomicBoolean acquired = new AtomicBoolean(false);
@@ -131,8 +132,23 @@ public class IslandCreationService {
 
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     try {
-                        if (fallback)
+                        if (natural) {
+                            // Spawn on the real, natural ground. Only build a small
+                            // platform when the centre is over water (ocean), so the
+                            // player never lands in the sea.
+                            world.getChunkAt(centerX >> 4, centerZ >> 4).load(true);
+                            org.bukkit.block.Block top = world.getHighestBlockAt(centerX, centerZ);
+                            int surfaceY;
+                            if (top.isLiquid() || top.getY() < world.getSeaLevel()) {
+                                surfaceY = world.getSeaLevel();
+                                islandManager.buildDefaultPlatform(world, centerX, surfaceY, centerZ);
+                            } else {
+                                surfaceY = top.getY();
+                            }
+                            island.setHome(centerX + 0.5, surfaceY + 1, centerZ + 0.5, 0f, 0f);
+                        } else if (fallback) {
                             islandManager.buildDefaultPlatform(world, centerX, centerY, centerZ);
+                        }
                         islandManager.register(island);
 
                         Player online = Bukkit.getPlayer(playerId);
@@ -144,6 +160,9 @@ public class IslandCreationService {
                             if (islandManager.getBorderManager() != null)
                                 islandManager.getBorderManager().apply(online, island);
                         }
+
+                        Bukkit.getPluginManager().callEvent(
+                                new net.cengiz1.skyblock.event.IslandCreateEvent(island));
                         result.complete(Result.SUCCESS);
                     } catch (Throwable error) {
                         plugin.getLogger().warning("Island finalize failed for " + playerId + ": " + error.getMessage());

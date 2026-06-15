@@ -28,15 +28,17 @@ public class WorldManager {
             return;
         }
 
-        this.world = new WorldCreator(name)
-                .environment(World.Environment.NORMAL)
-                .generator(new VoidGenerator())
-                .createWorld();
+        WorldCreator creator = new WorldCreator(name).environment(World.Environment.NORMAL);
+        if (settings.isVoidWorld())
+            creator.generator(new VoidGenerator());
+        this.world = creator.createWorld();
 
         if (this.world != null) {
-            this.world.setSpawnLocation(0, settings.getIslandHeight() + 5, 0);
-            trySetGameRule(this.world, "doDaylightCycle", false);
-            trySetGameRule(this.world, "doWeatherCycle", false);
+            if (settings.isVoidWorld()) {
+                this.world.setSpawnLocation(0, settings.getIslandHeight() + 5, 0);
+                trySetGameRule(this.world, "doDaylightCycle", false);
+                trySetGameRule(this.world, "doWeatherCycle", false);
+            }
             trySetGameRule(this.world, "doMobSpawning", true);
         }
     }

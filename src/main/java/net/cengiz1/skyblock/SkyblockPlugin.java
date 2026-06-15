@@ -69,7 +69,10 @@ public final class SkyblockPlugin extends JavaPlugin {
         }
 
         this.worldManager = new WorldManager(this, this.settings);
-        this.worldManager.loadWorld();
+        if (this.settings.isIslandEnabled())
+            this.worldManager.loadWorld();
+        else
+            getLogger().info("Island system disabled (island.enabled: false); running for modules only.");
 
         this.islandManager = new IslandManager(this, this.settings, this.storage, this.worldManager);
         this.islandManager.loadAll();
@@ -90,15 +93,17 @@ public final class SkyblockPlugin extends JavaPlugin {
         this.proxyManager = new ProxyManager(this);
         this.proxyManager.start();
 
-        ListenerRegistrar.registerAll(this);
+        if (this.settings.isIslandEnabled()) {
+            ListenerRegistrar.registerAll(this);
 
-        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null)
-            registerPlaceholders();
+            if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null)
+                registerPlaceholders();
 
-        CommandRegistrar.register(this);
+            CommandRegistrar.register(this);
 
-        new IslandTimeTask(this, this.islandManager, this.settings)
-                .runTaskTimer(this, 40L, 40L);
+            new IslandTimeTask(this, this.islandManager, this.settings)
+                    .runTaskTimer(this, 40L, 40L);
+        }
 
         this.moduleManager = new ModuleManager(this);
         this.moduleManager.loadModules();

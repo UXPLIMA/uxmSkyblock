@@ -16,7 +16,9 @@ public class SettingsManager {
 
     private final SkyblockPlugin plugin;
 
+    private boolean islandEnabled;
     private String worldName;
+    private String worldGenerator;
     private int islandHeight;
     private int islandDistance;
     private int islandSize;
@@ -68,7 +70,9 @@ public class SettingsManager {
     public void reload() {
         FileConfiguration config = plugin.getConfig();
 
+        this.islandEnabled = config.getBoolean("island.enabled", true);
         this.worldName = config.getString("world.name", "islands");
+        this.worldGenerator = config.getString("world.generator", "void").toLowerCase();
         this.islandHeight = config.getInt("world.island-height", 100);
         this.islandDistance = config.getInt("world.island-distance", 250);
         this.islandSize = config.getInt("world.island-size", 100);
@@ -129,8 +133,16 @@ public class SettingsManager {
         this.proxyRedisChannel = config.getString("proxy.redis.channel", "skyblock:proxy");
     }
 
+    public boolean isIslandEnabled() {
+        return islandEnabled;
+    }
+
     public String getWorldName() {
         return worldName;
+    }
+
+    public boolean isVoidWorld() {
+        return !worldGenerator.equals("normal") && !worldGenerator.equals("vanilla");
     }
 
     public int getIslandHeight() {
