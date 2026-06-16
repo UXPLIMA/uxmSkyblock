@@ -114,6 +114,14 @@ economy:
   # if Vault is missing, in which case only the level requirement applies.
   enabled: true
 
+# Obsidian generators. Lava that touches water turns into obsidian and the lava
+# would normally be lost. With this enabled, right-clicking an obsidian block
+# with an EMPTY bucket breaks it and hands the lava back as a lava bucket, so
+# the generator can be reused. On an island the player needs block-break
+# permission; off an island it always works.
+obsidian:
+  bucket-to-lava: true
+
 # Island leaderboard (/island top) and the personal floating hologram that
 # follows the player around (/island top holo). The hologram is only visible to
 # the player who toggled it and works in any world (including Chunklock worlds).

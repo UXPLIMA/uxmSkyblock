@@ -43,6 +43,7 @@ public class SettingsManager {
     private boolean economyEnabled;
     private int warpDefaultLimit;
     private String warpPermissionPrefix;
+    private boolean obsidianBucketToLava;
 
     private String storageType;
     private String host;
@@ -99,6 +100,7 @@ public class SettingsManager {
         this.economyEnabled = config.getBoolean("economy.enabled", true);
         this.warpDefaultLimit = Math.max(1, config.getInt("warp.default-limit", 1));
         this.warpPermissionPrefix = config.getString("warp.permission-prefix", "skyblock.warps");
+        this.obsidianBucketToLava = config.getBoolean("obsidian.bucket-to-lava", true);
 
         this.subcommandAliases = new LinkedHashMap<>();
         ConfigurationSection subs = config.getConfigurationSection("command.subcommands");
@@ -218,6 +220,10 @@ public class SettingsManager {
 
     public String getWarpPermissionPrefix() {
         return warpPermissionPrefix;
+    }
+
+    public boolean isObsidianBucketToLava() {
+        return obsidianBucketToLava;
     }
 
     public String getStorageType() {

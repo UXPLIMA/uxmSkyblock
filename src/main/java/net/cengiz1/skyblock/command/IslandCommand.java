@@ -1,7 +1,11 @@
 package net.cengiz1.skyblock.command;
 
 import net.cengiz1.skyblock.SkyblockPlugin;
+import net.cengiz1.skyblock.island.Island;
+import net.cengiz1.skyblock.island.IslandPermission;
+import net.cengiz1.skyblock.island.RoleData;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -115,21 +119,131 @@ public class IslandCommand extends Command {
     @Override
     public List<String> tabComplete(CommandSender sender, String alias, String[] args) {
         List<String> result = new ArrayList<>();
+        if (args.length == 0)
+            return result;
+
         if (args.length == 1) {
-            String prefix = args[0].toLowerCase();
             for (String key : this.resolver.keySet())
-                if (key.startsWith(prefix))
-                    result.add(key);
-        } else if (args.length == 2) {
-            String canonical = this.resolver.get(args[0].toLowerCase());
-            if (canonical != null && isPlayerArg(canonical)) {
-                String prefix = args[1].toLowerCase();
-                for (Player online : Bukkit.getOnlinePlayers())
-                    if (online.getName().toLowerCase().startsWith(prefix))
-                        result.add(online.getName());
-            }
+                addIfMatch(result, args[0], key);
+            return result;
+        }
+
+        String canonical = this.resolver.get(args[0].toLowerCase());
+        if (canonical == null)
+            return result;
+        Player player = sender instanceof Player ? (Player) sender : null;
+
+        switch (canonical) {
+            case "border":
+                if (args.length == 2)
+                    addAll(result, args[1], "BLUE", "GREEN", "RED");
+                break;
+            case "bank":
+                if (args.length == 2)
+                    addAll(result, args[1], "balance", "deposit", "withdraw");
+                break;
+            case "top":
+                if (args.length == 2)
+                    addAll(result, args[1], "holo");
+                break;
+            case "setwarp":
+            case "delwarp":
+                if (args.length == 2 && player != null)
+                    addWarpNames(result, ownIsland(player), args[1]);
+                break;
+            case "warp":
+                if (args.length == 2)
+                    addOnlinePlayers(result, args[1]);
+                else if (args.length == 3)
+                    addWarpNames(result, islandOfOwnerName(args[1]), args[2]);
+                break;
+            case "rol":
+                completeRole(result, player, args);
+                break;
+            default:
+                if (args.length == 2 && isPlayerArg(canonical))
+                    addOnlinePlayers(result, args[1]);
         }
         return result;
+    }
+
+    private void completeRole(List<String> result, Player player, String[] args) {
+        if (args.length == 2) {
+            addAll(result, args[1], "create", "delete", "perm", "list");
+            addOnlinePlayers(result, args[1]);
+            return;
+        }
+        String sub = args[1].toLowerCase();
+        if (!RoleCommands.isManagement(sub)) {
+            // /is rol <player> <roleId>
+            if (args.length == 3)
+                addAssignableRoles(result, ownIsland(player), args[2]);
+            return;
+        }
+        if (sub.equals("perm") || sub.equals("izin")) {
+            if (args.length == 3)
+                addCustomRoles(result, ownIsland(player), args[2]);
+            else if (args.length == 4)
+                addPermissions(result, args[3]);
+            else if (args.length == 5)
+                addAll(result, args[4], "on", "off");
+        } else if (args.length == 3 && (sub.equals("delete") || sub.equals("sil")
+                || sub.equals("kaldir") || sub.equals("kaldır"))) {
+            addCustomRoles(result, ownIsland(player), args[2]);
+        }
+    }
+
+    private Island ownIsland(Player player) {
+        return player == null ? null : plugin.getIslandManager().getByMember(player.getUniqueId());
+    }
+
+    private Island islandOfOwnerName(String name) {
+        OfflinePlayer target = Bukkit.getPlayerExact(name);
+        if (target == null) {
+            OfflinePlayer offline = Bukkit.getOfflinePlayer(name);
+            target = offline.hasPlayedBefore() ? offline : null;
+        }
+        return target == null ? null : plugin.getIslandManager().getByOwner(target.getUniqueId());
+    }
+
+    private void addAll(List<String> result, String prefix, String... values) {
+        for (String value : values)
+            addIfMatch(result, prefix, value);
+    }
+
+    private void addOnlinePlayers(List<String> result, String prefix) {
+        for (Player online : Bukkit.getOnlinePlayers())
+            addIfMatch(result, prefix, online.getName());
+    }
+
+    private void addWarpNames(List<String> result, Island island, String prefix) {
+        if (island != null)
+            for (String name : island.getWarpNames())
+                addIfMatch(result, prefix, name);
+    }
+
+    private void addAssignableRoles(List<String> result, Island island, String prefix) {
+        for (RoleData role : plugin.getRoleManager().assignableBuiltins())
+            addIfMatch(result, prefix, role.getId());
+        if (island != null)
+            for (RoleData role : island.getCustomRoles())
+                addIfMatch(result, prefix, role.getId());
+    }
+
+    private void addCustomRoles(List<String> result, Island island, String prefix) {
+        if (island != null)
+            for (RoleData role : island.getCustomRoles())
+                addIfMatch(result, prefix, role.getId());
+    }
+
+    private void addPermissions(List<String> result, String prefix) {
+        for (IslandPermission permission : IslandPermission.values())
+            addIfMatch(result, prefix, permission.name());
+    }
+
+    private void addIfMatch(List<String> result, String prefix, String value) {
+        if (value.toLowerCase().startsWith(prefix.toLowerCase()))
+            result.add(value);
     }
 
     private boolean isPlayerArg(String canonical) {

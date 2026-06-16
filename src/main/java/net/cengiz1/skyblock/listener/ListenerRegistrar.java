@@ -25,6 +25,7 @@ public final class ListenerRegistrar {
         register(plugin, new FireListener(islandManager));
         register(plugin, new VisitorInteractListener(islandManager));
         register(plugin, new WarpSignListener(plugin));
+        register(plugin, new ObsidianBucketListener(plugin, islandManager));
 
         register(plugin, new BlockTrackListener(plugin, islandManager,
                 plugin.getBlockValueManager(), plugin.getLevelManager()));
