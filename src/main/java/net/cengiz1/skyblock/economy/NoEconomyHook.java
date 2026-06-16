@@ -20,6 +20,11 @@ public class NoEconomyHook implements EconomyHook {
     }
 
     @Override
+    public boolean deposit(Player player, double amount) {
+        return true;
+    }
+
+    @Override
     public double balance(Player player) {
         return 0;
     }

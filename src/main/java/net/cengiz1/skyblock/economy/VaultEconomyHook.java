@@ -43,6 +43,13 @@ public class VaultEconomyHook implements EconomyHook {
     }
 
     @Override
+    public boolean deposit(Player player, double amount) {
+        if (amount <= 0)
+            return true;
+        return this.economy.depositPlayer(player, amount).transactionSuccess();
+    }
+
+    @Override
     public double balance(Player player) {
         return this.economy.getBalance(player);
     }

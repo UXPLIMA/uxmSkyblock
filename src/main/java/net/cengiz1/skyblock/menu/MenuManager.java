@@ -37,7 +37,8 @@ import java.util.regex.Pattern;
 public class MenuManager {
 
     private static final String[] DEFAULT_MENUS = {
-            "main.yml", "settings.yml", "upgrades.yml", "help.yml", "delete-confirm.yml", "warp.yml"
+            "main.yml", "settings.yml", "upgrades.yml", "help.yml", "delete-confirm.yml", "warp.yml",
+            "blocks.yml"
     };
 
     private static final Pattern FLAG_PATTERN = Pattern.compile("\\{flag_([a-zA-Z_]+)\\}");
@@ -88,6 +89,9 @@ public class MenuManager {
         definition.setHeadName(config.getString("head-name"));
         definition.setHeadLore(config.getStringList("head-lore"));
         definition.setMemberFormat(config.getString("member-format"));
+
+        definition.setBlockName(config.getString("block-name"));
+        definition.setBlockLore(config.getStringList("block-lore"));
 
         ConfigurationSection items = config.getConfigurationSection("items");
         if (items != null) {
@@ -151,6 +155,9 @@ public class MenuManager {
         if (definition.getType().equals("warps"))
             populateWarps(definition, inventory, holder);
 
+        if (definition.getType().equals("blocks"))
+            populateBlocks(definition, inventory, holder);
+
         player.openInventory(inventory);
     }
 
@@ -200,6 +207,48 @@ public class MenuManager {
         }
     }
 
+    private void populateBlocks(MenuDefinition definition, Inventory inventory, MenuHolder holder) {
+        List<Integer> slots = definition.getHeadSlots();
+        if (slots.isEmpty())
+            return;
+
+        List<Map.Entry<Material, Double>> values =
+                new ArrayList<>(plugin.getBlockValueManager().getPositiveValues().entrySet());
+        int perPage = slots.size();
+        int pageCount = Math.max(1, (int) Math.ceil(values.size() / (double) perPage));
+        int page = Math.min(holder.getPage(), pageCount - 1);
+        holder.setPageCount(pageCount);
+
+        int start = page * perPage;
+        for (int i = 0; i < perPage; i++) {
+            int index = start + i;
+            int slot = slots.get(i);
+            if (slot < 0 || slot >= inventory.getSize() || index >= values.size())
+                continue;
+            Map.Entry<Material, Double> entry = values.get(index);
+            inventory.setItem(slot, buildBlockItem(definition, entry.getKey(), entry.getValue()));
+        }
+    }
+
+    private ItemStack buildBlockItem(MenuDefinition definition, Material material, double value) {
+        Material icon = material.isItem() ? material : Material.PAPER;
+        ItemStack item = new ItemStack(icon);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            String block = prettyName(material.name());
+            String number = formatNumber(value);
+            meta.setDisplayName(color(definition.getBlockName()
+                    .replace("{block}", block).replace("{value}", number)));
+            List<String> lore = new ArrayList<>();
+            for (String line : definition.getBlockLore())
+                lore.add(color(line.replace("{block}", block).replace("{value}", number)));
+            if (!lore.isEmpty())
+                meta.setLore(lore);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
     private List<Island> collectOnlineIslands() {
         Map<UUID, Island> unique = new LinkedHashMap<>();
         for (Player online : Bukkit.getOnlinePlayers()) {
@@ -241,8 +290,8 @@ public class MenuManager {
     private void appendMembers(List<String> lore, String format, Island island) {
         lore.add(color(format
                 .replace("{player}", nameOf(island.getOwner()))
-                .replace("{role}", IslandRole.OWNER.getDisplayName())));
-        for (Map.Entry<UUID, IslandRole> entry : island.getMembers().entrySet())
+                .replace("{role}", plugin.getRoleManager().owner().getDisplayName())));
+        for (Map.Entry<UUID, net.cengiz1.skyblock.island.RoleData> entry : island.getMembers().entrySet())
             lore.add(color(format
                     .replace("{player}", nameOf(entry.getKey()))
                     .replace("{role}", entry.getValue().getDisplayName())));
@@ -507,6 +556,9 @@ public class MenuManager {
         result = result.replace("{next_points}", next < 0 ? "MAX" : formatNumber(next));
 
         result = replaceFlags(result, island);
+        // Resolve our own %skyblock_...% tokens internally first so menus render
+        // even when PlaceholderAPI is missing; then let PAPI handle the rest.
+        result = net.cengiz1.skyblock.placeholder.SkyblockPlaceholders.apply(plugin, player, result);
         return Placeholders.apply(player, result);
     }
 
@@ -544,6 +596,7 @@ public class MenuManager {
         result = result.replace("{lock_state}", island.isLocked()
                 ? plugin.getMessages().get("visit-closed")
                 : plugin.getMessages().get("visit-open"));
+        result = net.cengiz1.skyblock.placeholder.SkyblockPlaceholders.apply(plugin, owner, result);
         return Placeholders.apply(owner, result);
     }
 

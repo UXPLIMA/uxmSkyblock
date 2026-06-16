@@ -43,9 +43,12 @@ messages:
   # Warps
   warping: "&7Warping to {player}'s island..."
   warp-set: "&aIsland warp point has been set."
+  warp-set-named: "&aWarp &e{name}&a has been set."
   warp-set-unsafe: "&cYou can't set a warp here; it isn't safe to land on."
   warp-removed: "&aIsland warp has been removed."
   warp-none: "&cYour island doesn't have a warp set."
+  warp-unknown-name: "&cNo warp named &e{name}&c on that island."
+  warp-limit-reached: "&cYour island reached its warp limit (&e{limit}&c). Get a higher rank for more."
   warp-no-warp: "&c'{player}' doesn't have a public warp."
   warp-unsafe: "&cThat warp is not safe to teleport to right now."
   spawn-set: "&aIsland spawn point has been set."
@@ -92,11 +95,31 @@ messages:
   invalid-role: "&cInvalid role. Options: &e{roles}"
   role-set: "&a{player}'s role was set to {role}&a."
 
+  # Custom island roles (/island role create|delete|perm|list)
+  role-usage: "&cUsage: /island role <create|delete|perm|list> ... &7or &e/island role <player> <role>"
+  role-create-usage: "&cUsage: /island role create <id> [display name]"
+  role-perm-usage: "&cUsage: /island role perm <id> <permission> <on|off>. &7Permissions: &e{perms}"
+  role-invalid-perm: "&cUnknown permission. Options: &e{perms}"
+  role-created: "&aCustom role &e{role}&a created. Set its permissions with &e/island role perm {role} <perm> on&a."
+  role-deleted: "&aCustom role &e{role}&a deleted (its members were moved to member)."
+  role-exists: "&cYou already have a custom role named &e{role}&c."
+  role-not-found: "&cNo custom role named &e{role}&c."
+  role-builtin-protected: "&cBuilt-in roles can't be created or deleted (edit roles.yml instead)."
+  role-perm-set: "&aRole &e{role}&a permission &e{perm}&a is now {state}&a."
+  role-list-header: "&b&l— Island Roles —"
+  role-list-builtin: "&8• &7{role} &8(built-in) &7{display}"
+  role-list-custom: "&8• &e{role} &7{display} &8- &7{perms}"
+
   # Flight and lock
   fly-on: "&aFlight mode enabled."
   fly-off: "&7Flight mode disabled."
   island-locked: "&7Your island is now locked (closed to visitors)."
   island-unlocked: "&aYour island is now open to visitors."
+
+  # Border color (/island border <BLUE|GREEN|RED>)
+  border-usage: "&cUsage: /island border <BLUE|GREEN|RED>"
+  border-invalid: "&cInvalid color. Choose BLUE, GREEN or RED."
+  border-set: "&aYour island border color is now &e{color}&a."
 
   # Info
   info-header: "&b&l— Island Info —"
@@ -113,6 +136,17 @@ messages:
   # Generic yes/no used by PlaceholderAPI placeholders
   placeholder-yes: "&aYes"
   placeholder-no: "&cNo"
+
+  # Bank (/island bank [deposit|withdraw] <amount>)
+  bank-balance: "&7Island bank balance: &a{amount}"
+  bank-usage: "&cUsage: /island bank <deposit|withdraw> <amount>"
+  bank-invalid-amount: "&cEnter a valid amount."
+  bank-no-economy: "&cThe bank is unavailable (no economy plugin)."
+  bank-need-money: "&cYou don't have that much money to deposit."
+  bank-insufficient: "&cThe island bank only has &e{amount}&c."
+  bank-deposit: "&aDeposited &e{amount}&a into the island bank. Balance: &e{balance}"
+  bank-withdraw: "&aWithdrew &e{amount}&a from the island bank. Balance: &e{balance}"
+  bank-failed: "&cThe transaction could not be completed."
 
   # Time
   time-no-permission: "&cYou don't have permission to change the island time (VIP+)."

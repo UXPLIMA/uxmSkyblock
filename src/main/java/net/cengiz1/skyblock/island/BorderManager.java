@@ -107,7 +107,11 @@ public class BorderManager implements Listener {
         border.setWarningDistance(0);
         border.setWarningTime(0);
 
-        switch (plugin.getSettings().getBorderColor()) {
+        String color = island.getBorderColor();
+        if (color == null || color.isEmpty())
+            color = plugin.getSettings().getBorderColor();
+
+        switch (color) {
             case "GREEN":
                 border.setSize(size + 10.0, 9_999_999L);
                 break;

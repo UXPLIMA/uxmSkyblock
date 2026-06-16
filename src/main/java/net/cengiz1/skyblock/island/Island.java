@@ -5,14 +5,31 @@ import org.bukkit.World;
 
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Island {
+
+    /** A single named warp point on the island. */
+    public static final class WarpPoint {
+        public final double x;
+        public final double y;
+        public final double z;
+        public final float yaw;
+        public final float pitch;
+
+        public WarpPoint(double x, double y, double z, float yaw, float pitch) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.yaw = yaw;
+            this.pitch = pitch;
+        }
+    }
 
     private final UUID uniqueId;
     private UUID owner;
@@ -28,26 +45,29 @@ public class Island {
     private float homeYaw;
     private float homePitch;
 
-    private boolean hasWarp;
-    private double warpX;
-    private double warpY;
-    private double warpZ;
-    private float warpYaw;
-    private float warpPitch;
+    private final Map<String, WarpPoint> warps = new LinkedHashMap<>();
 
     private String name;
     private boolean locked;
     private IslandTime time = IslandTime.NORMAL;
+    private String borderColor;
 
     private String serverName;
 
     private double points;
     private int level;
+    private double bank;
 
     private final EnumMap<IslandFlag, Boolean> flags = new EnumMap<>(IslandFlag.class);
-    private final Map<UUID, IslandRole> members = new ConcurrentHashMap<>();
+    // Member UUID -> role id (lowercase). Built-in ids come from roles.yml,
+    // custom ids from this island's own customRoles map.
+    private final Map<UUID, String> members = new ConcurrentHashMap<>();
+    private final Map<String, RoleData> customRoles = new ConcurrentHashMap<>();
     private final Set<UUID> banned = ConcurrentHashMap.newKeySet();
     private final Map<String, Integer> upgrades = new ConcurrentHashMap<>();
+
+    // Shared resolver for built-in roles; set once at plugin enable.
+    private static RoleResolver resolver;
 
     private boolean dirty;
 
@@ -126,57 +146,139 @@ public class Island {
     }
 
     public boolean hasWarp() {
-        return hasWarp;
+        return !warps.isEmpty();
     }
 
-    public Location getWarp(World world) {
-        if (!hasWarp)
+    public boolean hasWarp(String name) {
+        return warps.containsKey(key(name));
+    }
+
+    public int getWarpCount() {
+        return warps.size();
+    }
+
+    public Set<String> getWarpNames() {
+        return Collections.unmodifiableSet(warps.keySet());
+    }
+
+    /** The name of the default warp (the first one set), or null if there are none. */
+    public String getDefaultWarpName() {
+        return warps.isEmpty() ? null : warps.keySet().iterator().next();
+    }
+
+    private WarpPoint resolveWarp(String name) {
+        if (warps.isEmpty())
             return null;
-        return new Location(world, warpX, warpY, warpZ, warpYaw, warpPitch);
+        if (name == null || name.isEmpty())
+            return warps.values().iterator().next();
+        return warps.get(key(name));
     }
 
-    public void setWarp(Location location) {
-        this.warpX = location.getX();
-        this.warpY = location.getY();
-        this.warpZ = location.getZ();
-        this.warpYaw = location.getYaw();
-        this.warpPitch = location.getPitch();
-        this.hasWarp = true;
+    /** The default warp location (first warp set), for callers that don't pick a name. */
+    public Location getWarp(World world) {
+        return getWarp(world, null);
+    }
+
+    public Location getWarp(World world, String name) {
+        WarpPoint point = resolveWarp(name);
+        if (point == null)
+            return null;
+        return new Location(world, point.x, point.y, point.z, point.yaw, point.pitch);
+    }
+
+    public void setWarp(String name, Location location) {
+        this.warps.put(key(name), new WarpPoint(
+                location.getX(), location.getY(), location.getZ(),
+                location.getYaw(), location.getPitch()));
         this.dirty = true;
+    }
+
+    /** Legacy single-warp setter; stores under the default name. */
+    public void setWarp(Location location) {
+        setWarp("ada", location);
+    }
+
+    public boolean removeWarp(String name) {
+        if (this.warps.remove(key(name)) != null) {
+            this.dirty = true;
+            return true;
+        }
+        return false;
     }
 
     public void clearWarp() {
-        this.hasWarp = false;
-        this.dirty = true;
+        if (!this.warps.isEmpty()) {
+            this.warps.clear();
+            this.dirty = true;
+        }
     }
 
+    /** Restores a legacy single warp (from the old per-coordinate DB columns). */
     public void setWarpRaw(boolean hasWarp, double x, double y, double z, float yaw, float pitch) {
-        this.hasWarp = hasWarp;
-        this.warpX = x;
-        this.warpY = y;
-        this.warpZ = z;
-        this.warpYaw = yaw;
-        this.warpPitch = pitch;
+        if (hasWarp)
+            this.warps.put("ada", new WarpPoint(x, y, z, yaw, pitch));
+    }
+
+    private WarpPoint defaultWarp() {
+        return resolveWarp(null);
     }
 
     public double getWarpX() {
-        return warpX;
+        WarpPoint p = defaultWarp();
+        return p == null ? 0 : p.x;
     }
 
     public double getWarpY() {
-        return warpY;
+        WarpPoint p = defaultWarp();
+        return p == null ? 0 : p.y;
     }
 
     public double getWarpZ() {
-        return warpZ;
+        WarpPoint p = defaultWarp();
+        return p == null ? 0 : p.z;
     }
 
     public float getWarpYaw() {
-        return warpYaw;
+        WarpPoint p = defaultWarp();
+        return p == null ? 0 : p.yaw;
     }
 
     public float getWarpPitch() {
-        return warpPitch;
+        WarpPoint p = defaultWarp();
+        return p == null ? 0 : p.pitch;
+    }
+
+    private static String key(String name) {
+        return name == null ? "" : name.trim().toLowerCase();
+    }
+
+    public String serializeWarps() {
+        StringBuilder builder = new StringBuilder();
+        for (Map.Entry<String, WarpPoint> entry : this.warps.entrySet()) {
+            if (builder.length() > 0)
+                builder.append(';');
+            WarpPoint p = entry.getValue();
+            builder.append(entry.getKey()).append(',')
+                    .append(p.x).append(',').append(p.y).append(',').append(p.z).append(',')
+                    .append(p.yaw).append(',').append(p.pitch);
+        }
+        return builder.toString();
+    }
+
+    public void loadWarps(String serialized) {
+        if (serialized == null || serialized.isEmpty())
+            return;
+        for (String part : serialized.split(";")) {
+            String[] f = part.split(",");
+            if (f.length != 6)
+                continue;
+            try {
+                this.warps.put(key(f[0]), new WarpPoint(
+                        Double.parseDouble(f[1]), Double.parseDouble(f[2]), Double.parseDouble(f[3]),
+                        Float.parseFloat(f[4]), Float.parseFloat(f[5])));
+            } catch (NumberFormatException ignored) {
+            }
+        }
     }
 
     public double getHomeX() {
@@ -223,6 +325,20 @@ public class Island {
 
     public void setLockedRaw(boolean locked) {
         this.locked = locked;
+    }
+
+    /** Per-island border color (BLUE/GREEN/RED), or null to inherit the config default. */
+    public String getBorderColor() {
+        return borderColor;
+    }
+
+    public void setBorderColor(String borderColor) {
+        this.borderColor = borderColor;
+        this.dirty = true;
+    }
+
+    public void setBorderColorRaw(String borderColor) {
+        this.borderColor = borderColor;
     }
 
     public String getServerName() {
@@ -281,6 +397,30 @@ public class Island {
         this.level = Math.max(0, level);
     }
 
+    public double getBank() {
+        return bank;
+    }
+
+    public void setBank(double bank) {
+        this.bank = Math.max(0, bank);
+        this.dirty = true;
+    }
+
+    public void setBankRaw(double bank) {
+        this.bank = Math.max(0, bank);
+    }
+
+    public void depositBank(double amount) {
+        setBank(this.bank + amount);
+    }
+
+    /** Withdraw up to {@code amount} from the bank; returns the amount actually removed. */
+    public double withdrawBank(double amount) {
+        double taken = Math.min(Math.max(0, amount), this.bank);
+        setBank(this.bank - taken);
+        return taken;
+    }
+
     public boolean getFlag(IslandFlag flag) {
         return this.flags.getOrDefault(flag, flag.getDefault());
     }
@@ -290,8 +430,39 @@ public class Island {
         this.dirty = true;
     }
 
-    public Map<UUID, IslandRole> getMembers() {
-        return Collections.unmodifiableMap(members);
+    public static void setResolver(RoleResolver roleResolver) {
+        resolver = roleResolver;
+    }
+
+    private RoleData resolveRole(String id) {
+        if (id != null) {
+            RoleData custom = customRoles.get(id.toLowerCase());
+            if (custom != null)
+                return custom;
+            if (resolver != null) {
+                RoleData builtin = resolver.builtin(id);
+                if (builtin != null)
+                    return builtin;
+            }
+        }
+        return resolver != null ? resolver.visitor() : null;
+    }
+
+    /** Resolve a role id against this island's custom roles, then the built-ins. */
+    public RoleData resolveRoleById(String id) {
+        if (id == null)
+            return null;
+        RoleData custom = customRoles.get(id.toLowerCase());
+        if (custom != null)
+            return custom;
+        return resolver != null ? resolver.builtin(id) : null;
+    }
+
+    public Map<UUID, RoleData> getMembers() {
+        Map<UUID, RoleData> result = new LinkedHashMap<>();
+        for (Map.Entry<UUID, String> entry : members.entrySet())
+            result.put(entry.getKey(), resolveRole(entry.getValue()));
+        return Collections.unmodifiableMap(result);
     }
 
     public Set<UUID> getAllMemberIds() {
@@ -308,22 +479,66 @@ public class Island {
         return owner.equals(id) || members.containsKey(id);
     }
 
-    public IslandRole getRole(UUID id) {
+    public RoleData getRole(UUID id) {
         if (owner.equals(id))
-            return IslandRole.OWNER;
-        IslandRole role = members.get(id);
-        return role != null ? role : IslandRole.VISITOR;
+            return resolver != null ? resolver.owner() : null;
+        String roleId = members.get(id);
+        return resolveRole(roleId);
     }
 
-    public void setRole(UUID id, IslandRole role) {
-        if (owner.equals(id) || role == null || role == IslandRole.VISITOR)
+    /** The raw stored role id for a member (lowercase), or null. */
+    public String getRoleId(UUID id) {
+        if (owner.equals(id))
+            return RoleManager.OWNER_ID;
+        return members.get(id);
+    }
+
+    public void setRole(UUID id, String roleId) {
+        if (owner.equals(id) || roleId == null)
             return;
-        this.members.put(id, role);
+        if (roleId.equalsIgnoreCase(RoleManager.VISITOR_ID))
+            return;
+        this.members.put(id, roleId.toLowerCase());
         this.dirty = true;
     }
 
     public void addMember(UUID id) {
-        setRole(id, IslandRole.MEMBER);
+        setRole(id, RoleManager.MEMBER_ID);
+    }
+
+    // --- Per-island custom roles -------------------------------------------
+
+    public RoleData getCustomRole(String id) {
+        return id == null ? null : customRoles.get(id.toLowerCase());
+    }
+
+    public boolean hasCustomRole(String id) {
+        return id != null && customRoles.containsKey(id.toLowerCase());
+    }
+
+    public java.util.Collection<RoleData> getCustomRoles() {
+        return Collections.unmodifiableCollection(customRoles.values());
+    }
+
+    public RoleData createCustomRole(String id, String displayName, int weight) {
+        RoleData data = new RoleData(id, displayName, weight, false);
+        customRoles.put(data.getId(), data);
+        this.dirty = true;
+        return data;
+    }
+
+    public boolean removeCustomRole(String id) {
+        if (id == null)
+            return false;
+        String key = id.toLowerCase();
+        if (customRoles.remove(key) == null)
+            return false;
+        // Demote any members holding the removed role back to the default member role.
+        for (Map.Entry<UUID, String> entry : members.entrySet())
+            if (key.equals(entry.getValue()))
+                entry.setValue(RoleManager.MEMBER_ID);
+        this.dirty = true;
+        return true;
     }
 
     public void removeMember(UUID id) {
@@ -397,10 +612,10 @@ public class Island {
 
     public String serializeMembers() {
         StringBuilder builder = new StringBuilder();
-        for (Map.Entry<UUID, IslandRole> entry : this.members.entrySet()) {
+        for (Map.Entry<UUID, String> entry : this.members.entrySet()) {
             if (builder.length() > 0)
                 builder.append(';');
-            builder.append(entry.getKey()).append(':').append(entry.getValue().name());
+            builder.append(entry.getKey()).append(':').append(entry.getValue());
         }
         return builder.toString();
     }
@@ -409,15 +624,59 @@ public class Island {
         if (serialized == null || serialized.isEmpty())
             return;
         for (String part : serialized.split(";")) {
-            String[] kv = part.split(":");
-            if (kv.length != 2)
+            int idx = part.indexOf(':');
+            if (idx < 0)
                 continue;
             try {
-                IslandRole role = IslandRole.fromString(kv[1]);
-                if (role != null && role != IslandRole.VISITOR)
-                    this.members.put(UUID.fromString(kv[0]), role);
+                UUID uuid = UUID.fromString(part.substring(0, idx).trim());
+                String roleId = part.substring(idx + 1).trim().toLowerCase();
+                if (!roleId.isEmpty() && !roleId.equals(RoleManager.VISITOR_ID))
+                    this.members.put(uuid, roleId);
             } catch (IllegalArgumentException ignored) {
             }
+        }
+    }
+
+    public String serializeCustomRoles() {
+        StringBuilder builder = new StringBuilder();
+        for (RoleData role : this.customRoles.values()) {
+            if (builder.length() > 0)
+                builder.append(';');
+            StringBuilder perms = new StringBuilder();
+            for (IslandPermission permission : role.getPermissions()) {
+                if (perms.length() > 0)
+                    perms.append(',');
+                perms.append(permission.name());
+            }
+            builder.append(role.getId()).append('|')
+                    .append(role.getDisplayName().replace("|", " ").replace(";", " ")).append('|')
+                    .append(role.getWeight()).append('|').append(perms);
+        }
+        return builder.toString();
+    }
+
+    public void loadCustomRoles(String serialized) {
+        if (serialized == null || serialized.isEmpty())
+            return;
+        for (String part : serialized.split(";")) {
+            String[] f = part.split("\\|", 4);
+            if (f.length < 3)
+                continue;
+            int weight;
+            try {
+                weight = Integer.parseInt(f[2].trim());
+            } catch (NumberFormatException error) {
+                weight = 1;
+            }
+            RoleData role = new RoleData(f[0], f[1], weight, false);
+            if (f.length == 4 && !f[3].isEmpty()) {
+                for (String permName : f[3].split(",")) {
+                    IslandPermission permission = IslandPermission.fromString(permName);
+                    if (permission != null)
+                        role.setPermission(permission, true);
+                }
+            }
+            this.customRoles.put(role.getId(), role);
         }
     }
 

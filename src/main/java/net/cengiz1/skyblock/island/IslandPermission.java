@@ -19,6 +19,7 @@ public enum IslandPermission {
     UPGRADE,
     MANAGE_MEMBERS,
     FLY,
+    BANK,
     DELETE_ISLAND,
     TRANSFER;
 

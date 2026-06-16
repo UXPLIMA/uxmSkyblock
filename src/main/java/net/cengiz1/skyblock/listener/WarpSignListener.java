@@ -48,13 +48,27 @@ public class WarpSignListener implements Listener {
             return;
         }
 
-        island.setWarp(player.getLocation());
+        // Optional warp name from the second line; falls back to the default.
+        String warpName = sanitize(ChatColor.stripColor(event.getLine(1)));
+        if (warpName == null)
+            warpName = "ada";
+
+        if (!island.hasWarp(warpName)) {
+            int limit = plugin.getWarpService().getWarpLimit(player);
+            if (island.getWarpCount() >= limit) {
+                plugin.getMessages().send(player, "warp-limit-reached", "{limit}", String.valueOf(limit));
+                event.setLine(0, "");
+                return;
+            }
+        }
+
+        island.setWarp(warpName, player.getLocation());
         plugin.getIslandManager().saveAsync(island);
 
         String display = plugin.getConfig().getString("warp.sign-display", "&9[Warp]");
         event.setLine(0, ChatColor.translateAlternateColorCodes('&', display));
         event.setLine(1, name(player));
-        event.setLine(2, ChatColor.translateAlternateColorCodes('&', "&7Right-click"));
+        event.setLine(2, ChatColor.translateAlternateColorCodes('&', "&7" + warpName));
         event.setLine(3, "");
         plugin.getMessages().send(player, "warp-set");
     }
@@ -80,5 +94,12 @@ public class WarpSignListener implements Listener {
 
     private String name(Player player) {
         return player.getName();
+    }
+
+    private String sanitize(String name) {
+        if (name == null)
+            return null;
+        String cleaned = name.trim().toLowerCase().replaceAll("[^a-z0-9_-]", "");
+        return cleaned.isEmpty() ? null : cleaned;
     }
 }

@@ -180,7 +180,7 @@ public class IslandManager {
         this.ownerToIsland.remove(oldOwner);
         island.removeMember(newOwner);
         island.setOwner(newOwner);
-        island.setRole(oldOwner, IslandRole.MODERATOR);
+        island.setRole(oldOwner, "moderator");
         this.ownerToIsland.put(newOwner, island.getUniqueId());
         saveAsync(island);
     }
@@ -230,8 +230,12 @@ public class IslandManager {
     }
 
     public void teleportToWarp(Player player, Island island) {
+        teleportToWarp(player, island, null);
+    }
+
+    public void teleportToWarp(Player player, Island island, String warpName) {
         World world = this.worldManager.getWorld();
-        Location target = island.getWarp(world);
+        Location target = island.getWarp(world, warpName);
         if (target == null)
             target = island.getHome(world);
         world.getChunkAt(target);

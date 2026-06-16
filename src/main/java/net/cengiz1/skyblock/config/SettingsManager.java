@@ -17,6 +17,7 @@ public class SettingsManager {
     private final SkyblockPlugin plugin;
 
     private boolean islandEnabled;
+    private boolean clearInventoryOnLeave;
     private String worldName;
     private String worldGenerator;
     private int islandHeight;
@@ -40,6 +41,8 @@ public class SettingsManager {
     private Map<String, List<String>> subcommandAliases = new LinkedHashMap<>();
     private int inviteExpireSeconds;
     private boolean economyEnabled;
+    private int warpDefaultLimit;
+    private String warpPermissionPrefix;
 
     private String storageType;
     private String host;
@@ -71,6 +74,7 @@ public class SettingsManager {
         FileConfiguration config = plugin.getConfig();
 
         this.islandEnabled = config.getBoolean("island.enabled", true);
+        this.clearInventoryOnLeave = config.getBoolean("island.clear-inventory-on-leave", false);
         this.worldName = config.getString("world.name", "islands");
         this.worldGenerator = config.getString("world.generator", "void").toLowerCase();
         this.islandHeight = config.getInt("world.island-height", 100);
@@ -93,6 +97,8 @@ public class SettingsManager {
         this.commandAliases = config.getStringList("command.aliases");
         this.inviteExpireSeconds = Math.max(10, config.getInt("command.invite-expire-seconds", 120));
         this.economyEnabled = config.getBoolean("economy.enabled", true);
+        this.warpDefaultLimit = Math.max(1, config.getInt("warp.default-limit", 1));
+        this.warpPermissionPrefix = config.getString("warp.permission-prefix", "skyblock.warps");
 
         this.subcommandAliases = new LinkedHashMap<>();
         ConfigurationSection subs = config.getConfigurationSection("command.subcommands");
@@ -135,6 +141,10 @@ public class SettingsManager {
 
     public boolean isIslandEnabled() {
         return islandEnabled;
+    }
+
+    public boolean isClearInventoryOnLeave() {
+        return clearInventoryOnLeave;
     }
 
     public String getWorldName() {
@@ -200,6 +210,14 @@ public class SettingsManager {
 
     public boolean isEconomyEnabled() {
         return economyEnabled;
+    }
+
+    public int getWarpDefaultLimit() {
+        return warpDefaultLimit;
+    }
+
+    public String getWarpPermissionPrefix() {
+        return warpPermissionPrefix;
     }
 
     public String getStorageType() {

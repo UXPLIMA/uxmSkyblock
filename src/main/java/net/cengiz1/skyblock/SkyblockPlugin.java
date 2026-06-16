@@ -80,6 +80,7 @@ public final class SkyblockPlugin extends JavaPlugin {
         this.blockValueManager = new BlockValueManager(this);
         this.levelManager = new LevelManager(this);
         this.roleManager = new RoleManager(this);
+        net.cengiz1.skyblock.island.Island.setResolver(this.roleManager);
         this.inviteManager = new InviteManager(this.settings.getInviteExpireSeconds());
         this.visitService = new VisitService(this);
         this.warpService = new WarpService(this);

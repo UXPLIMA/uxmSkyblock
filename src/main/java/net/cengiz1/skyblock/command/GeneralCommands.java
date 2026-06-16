@@ -127,8 +127,8 @@ public class GeneralCommands extends CommandHandler {
         }
         plugin.getMessages().send(player, "members-header");
         plugin.getMessages().send(player, "members-entry",
-                "{player}", nameOf(island.getOwner()), "{role}", IslandRole.OWNER.getDisplayName());
-        for (Map.Entry<UUID, IslandRole> entry : island.getMembers().entrySet())
+                "{player}", nameOf(island.getOwner()), "{role}", plugin.getRoleManager().owner().getDisplayName());
+        for (Map.Entry<UUID, net.cengiz1.skyblock.island.RoleData> entry : island.getMembers().entrySet())
             plugin.getMessages().send(player, "members-entry",
                     "{player}", nameOf(entry.getKey()), "{role}", entry.getValue().getDisplayName());
     }

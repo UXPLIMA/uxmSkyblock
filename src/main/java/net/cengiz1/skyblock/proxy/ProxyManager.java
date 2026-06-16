@@ -191,6 +191,10 @@ public class ProxyManager {
     }
 
     public boolean handleWarpTeleport(Player player, Island island) {
+        return handleWarpTeleport(player, island, null);
+    }
+
+    public boolean handleWarpTeleport(Player player, Island island, String warpName) {
         if (!enabled)
             return false;
 
@@ -199,7 +203,10 @@ public class ProxyManager {
             return false;
 
         debug("Routing player " + player.getName() + " -> server '" + target + "' (island warp).");
-        messenger.setWithExpiry(warpKey(player.getUniqueId()), island.getUniqueId().toString(), pendingTtlSeconds);
+        String value = island.getUniqueId().toString();
+        if (warpName != null && !warpName.isEmpty())
+            value += "|" + warpName;
+        messenger.setWithExpiry(warpKey(player.getUniqueId()), value, pendingTtlSeconds);
         plugin.getMessages().send(player, "proxy-sending", "{server}", target);
         connector.connect(player, target);
         return true;
@@ -234,9 +241,18 @@ public class ProxyManager {
             String value = messenger.takeValue(warpKey(playerId));
             if (value == null)
                 return;
+            String idPart = value;
+            final String warpName;
+            int sep = value.indexOf('|');
+            if (sep >= 0) {
+                idPart = value.substring(0, sep);
+                warpName = value.substring(sep + 1);
+            } else {
+                warpName = null;
+            }
             UUID islandId;
             try {
-                islandId = UUID.fromString(value);
+                islandId = UUID.fromString(idPart);
             } catch (IllegalArgumentException error) {
                 return;
             }
@@ -249,7 +265,7 @@ public class ProxyManager {
                 if (online != null && online.isOnline() && island != null) {
                     plugin.getMessages().send(online, "warping", "{player}",
                             org.bukkit.Bukkit.getOfflinePlayer(island.getOwner()).getName());
-                    plugin.getIslandManager().teleportToWarp(online, island);
+                    plugin.getIslandManager().teleportToWarp(online, island, warpName);
                 }
             }, 20L);
         });

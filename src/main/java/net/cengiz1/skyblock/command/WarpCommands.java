@@ -12,12 +12,12 @@ public class WarpCommands extends CommandHandler {
         super(plugin);
     }
 
-    public void warp(Player player, String targetName) {
+    public void warp(Player player, String targetName, String warpName) {
         if (targetName == null) {
             openWarpMenu(player);
             return;
         }
-        plugin.getWarpService().warpByName(player, targetName);
+        plugin.getWarpService().warpByName(player, targetName, sanitize(warpName));
     }
 
     public void openWarpMenu(Player player) {
@@ -27,7 +27,7 @@ public class WarpCommands extends CommandHandler {
             plugin.getMessages().send(player, "unknown-subcommand");
     }
 
-    public void setWarp(Player player) {
+    public void setWarp(Player player, String name) {
         Island island = requirePermission(player, IslandPermission.SET_WARP);
         if (island == null)
             return;
@@ -39,12 +39,25 @@ public class WarpCommands extends CommandHandler {
             plugin.getMessages().send(player, "warp-set-unsafe");
             return;
         }
-        island.setWarp(player.getLocation());
+
+        String warpName = sanitize(name);
+        if (warpName == null)
+            warpName = "ada";
+
+        if (!island.hasWarp(warpName)) {
+            int limit = plugin.getWarpService().getWarpLimit(player);
+            if (island.getWarpCount() >= limit) {
+                plugin.getMessages().send(player, "warp-limit-reached", "{limit}", String.valueOf(limit));
+                return;
+            }
+        }
+
+        island.setWarp(warpName, player.getLocation());
         plugin.getIslandManager().saveAsync(island);
-        plugin.getMessages().send(player, "warp-set");
+        plugin.getMessages().send(player, "warp-set-named", "{name}", warpName);
     }
 
-    public void delWarp(Player player) {
+    public void delWarp(Player player, String name) {
         Island island = requirePermission(player, IslandPermission.SET_WARP);
         if (island == null)
             return;
@@ -52,8 +65,22 @@ public class WarpCommands extends CommandHandler {
             plugin.getMessages().send(player, "warp-none");
             return;
         }
-        island.clearWarp();
+
+        String warpName = sanitize(name);
+        if (warpName == null)
+            warpName = island.getDefaultWarpName();
+        if (warpName == null || !island.removeWarp(warpName)) {
+            plugin.getMessages().send(player, "warp-unknown-name", "{name}", name == null ? "-" : name);
+            return;
+        }
         plugin.getIslandManager().saveAsync(island);
         plugin.getMessages().send(player, "warp-removed");
+    }
+
+    private String sanitize(String name) {
+        if (name == null)
+            return null;
+        String cleaned = name.trim().toLowerCase().replaceAll("[^a-z0-9_-]", "");
+        return cleaned.isEmpty() ? null : cleaned;
     }
 }

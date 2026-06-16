@@ -4,8 +4,9 @@
 #
 # Permissions: BLOCK_PLACE, BLOCK_BREAK, INTERACT, CONTAINER, FARM,
 # PICKUP_ITEMS, DROP_ITEMS, DAMAGE_MOBS, INVITE, KICK, BAN, SET_HOME,
-# SET_WARP, TOGGLE_SETTINGS, UPGRADE, MANAGE_MEMBERS, FLY, DELETE_ISLAND,
-# TRANSFER  ('*' = all)
+# SET_WARP, TOGGLE_SETTINGS, UPGRADE, MANAGE_MEMBERS, FLY, BANK,
+# DELETE_ISLAND, TRANSFER  ('*' = all)
+# BANK lets a member withdraw from the island bank (anyone on the team can deposit).
 
 roles:
   visitor:
@@ -30,6 +31,7 @@ roles:
       - DROP_ITEMS
       - DAMAGE_MOBS
       - FLY
+      - BANK
 
   architect:
     name: "&bArchitect"
@@ -43,6 +45,7 @@ roles:
       - DROP_ITEMS
       - DAMAGE_MOBS
       - FLY
+      - BANK
       - SET_HOME
       - SET_WARP
 
@@ -58,6 +61,7 @@ roles:
       - DROP_ITEMS
       - DAMAGE_MOBS
       - FLY
+      - BANK
       - SET_HOME
       - SET_WARP
       - INVITE

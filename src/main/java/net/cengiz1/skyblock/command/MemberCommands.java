@@ -3,7 +3,8 @@ package net.cengiz1.skyblock.command;
 import net.cengiz1.skyblock.SkyblockPlugin;
 import net.cengiz1.skyblock.island.Island;
 import net.cengiz1.skyblock.island.IslandPermission;
-import net.cengiz1.skyblock.island.IslandRole;
+import net.cengiz1.skyblock.island.RoleData;
+import net.cengiz1.skyblock.island.RoleManager;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -89,8 +90,14 @@ public class MemberCommands extends CommandHandler {
         }
         island.removeMember(player.getUniqueId());
         plugin.getIslandManager().saveAsync(island);
+        clearInventoryIfEnabled(player);
         plugin.getMessages().send(player, "left-island");
         plugin.getIslandManager().messageMembers(island, "member-left", "{player}", player.getName());
+    }
+
+    private void clearInventoryIfEnabled(Player player) {
+        if (player != null && plugin.getSettings().isClearInventoryOnLeave())
+            player.getInventory().clear();
     }
 
     public void kick(Player player, String targetName) {
@@ -119,8 +126,10 @@ public class MemberCommands extends CommandHandler {
         plugin.getIslandManager().saveAsync(island);
         plugin.getMessages().send(player, "kicked", "{player}", target.getName());
         Player online = target.getPlayer();
-        if (online != null)
+        if (online != null) {
+            clearInventoryIfEnabled(online);
             plugin.getMessages().send(online, "you-were-kicked");
+        }
     }
 
     public void transfer(Player player, String targetName) {
@@ -242,17 +251,21 @@ public class MemberCommands extends CommandHandler {
             plugin.getMessages().send(player, "not-a-member");
             return;
         }
-        IslandRole role = IslandRole.fromString(roleName);
-        if (role == null || role == IslandRole.OWNER || role == IslandRole.VISITOR) {
+        RoleData role = island.resolveRoleById(roleName);
+        if (role == null
+                || role.getId().equals(RoleManager.OWNER_ID)
+                || role.getId().equals(RoleManager.VISITOR_ID)) {
             plugin.getMessages().send(player, "invalid-role", "{roles}", joinRoles());
             return;
         }
-        IslandRole actorRole = island.getRole(player.getUniqueId());
-        if (!actorRole.canManage(island.getRole(target.getUniqueId())) || !actorRole.canManage(role)) {
+        RoleData actorRole = island.getRole(player.getUniqueId());
+        if (actorRole == null
+                || !actorRole.canManage(island.getRole(target.getUniqueId()))
+                || !actorRole.canManage(role)) {
             plugin.getMessages().send(player, "cannot-manage-higher");
             return;
         }
-        island.setRole(target.getUniqueId(), role);
+        island.setRole(target.getUniqueId(), role.getId());
         plugin.getIslandManager().saveAsync(island);
         plugin.getMessages().send(player, "role-set",
                 "{player}", target.getName(), "{role}", role.getDisplayName());

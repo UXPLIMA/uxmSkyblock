@@ -42,6 +42,9 @@ public class MenuDefinition {
     private List<String> headLore = new ArrayList<>();
     private String memberFormat = "&8• &f{player} &7{role}";
 
+    private String blockName = "&e{block}";
+    private List<String> blockLore = new ArrayList<>();
+
     public MenuDefinition(String title, int rows, String type) {
         this.title = title;
         this.rows = rows;
@@ -123,5 +126,23 @@ public class MenuDefinition {
     public void setMemberFormat(String memberFormat) {
         if (memberFormat != null)
             this.memberFormat = memberFormat;
+    }
+
+    public String getBlockName() {
+        return blockName;
+    }
+
+    public void setBlockName(String blockName) {
+        if (blockName != null && !blockName.isEmpty())
+            this.blockName = blockName;
+    }
+
+    public List<String> getBlockLore() {
+        return blockLore;
+    }
+
+    public void setBlockLore(List<String> blockLore) {
+        if (blockLore != null && !blockLore.isEmpty())
+            this.blockLore = blockLore;
     }
 }

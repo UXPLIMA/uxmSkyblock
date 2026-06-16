@@ -31,7 +31,11 @@ public class UpgradeEffectListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onForm(BlockFormEvent event) {
         Material formed = event.getNewState().getType();
-        if (formed != Material.COBBLESTONE && formed != Material.STONE && formed != Material.BASALT)
+        // Generator-eligible formations. OBSIDIAN is included so a lava source
+        // turned to obsidian by water (the classic "lava obsidian" event) can be
+        // remapped by the generator too, alongside the cobblestone/stone path.
+        if (formed != Material.COBBLESTONE && formed != Material.STONE
+                && formed != Material.BASALT && formed != Material.OBSIDIAN)
             return;
 
         Island island = this.islandManager.getIslandAt(event.getBlock().getLocation());

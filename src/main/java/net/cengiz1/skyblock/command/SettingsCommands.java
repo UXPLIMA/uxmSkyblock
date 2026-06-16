@@ -47,6 +47,26 @@ public class SettingsCommands extends CommandHandler {
         plugin.getMessages().send(player, enable ? "fly-on" : "fly-off");
     }
 
+    public void setBorderColor(Player player, String colorArg) {
+        Island island = requirePermission(player, IslandPermission.TOGGLE_SETTINGS);
+        if (island == null)
+            return;
+        if (colorArg == null) {
+            plugin.getMessages().send(player, "border-usage");
+            return;
+        }
+        String color = colorArg.trim().toUpperCase();
+        if (!color.equals("BLUE") && !color.equals("GREEN") && !color.equals("RED")) {
+            plugin.getMessages().send(player, "border-invalid");
+            return;
+        }
+        island.setBorderColor(color);
+        plugin.getIslandManager().saveAsync(island);
+        if (plugin.getIslandManager().getBorderManager() != null)
+            plugin.getIslandManager().getBorderManager().refresh(island);
+        plugin.getMessages().send(player, "border-set", "{color}", color);
+    }
+
     public void toggleLock(Player player) {
         Island island = requirePermission(player, IslandPermission.TOGGLE_SETTINGS);
         if (island == null)

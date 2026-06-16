@@ -67,6 +67,10 @@ public class SqlStorage implements Storage {
         addColumnIfMissing("warp_z", "DOUBLE");
         addColumnIfMissing("warp_yaw", "FLOAT");
         addColumnIfMissing("warp_pitch", "FLOAT");
+        addColumnIfMissing("border_color", "VARCHAR(16)");
+        addColumnIfMissing("bank", "DOUBLE");
+        addColumnIfMissing("warps", "TEXT");
+        addColumnIfMissing("custom_roles", "TEXT");
     }
 
     private void addColumnIfMissing(String column, String type) {
@@ -155,16 +159,25 @@ public class SqlStorage implements Storage {
         island.setPointsRaw(result.getDouble("points"));
         island.setLevelRaw(result.getInt("level"));
         island.loadMembers(result.getString("members"));
+        island.loadCustomRoles(result.getString("custom_roles"));
         island.loadBanned(result.getString("banned"));
         island.loadUpgrades(result.getString("upgrades"));
         island.setServerNameRaw(result.getString("server"));
-        island.setWarpRaw(
-                result.getInt("has_warp") == 1,
-                result.getDouble("warp_x"),
-                result.getDouble("warp_y"),
-                result.getDouble("warp_z"),
-                result.getFloat("warp_yaw"),
-                result.getFloat("warp_pitch"));
+        String warpsData = result.getString("warps");
+        if (warpsData != null && !warpsData.isEmpty()) {
+            island.loadWarps(warpsData);
+        } else {
+            // Migrate from the legacy single-warp columns.
+            island.setWarpRaw(
+                    result.getInt("has_warp") == 1,
+                    result.getDouble("warp_x"),
+                    result.getDouble("warp_y"),
+                    result.getDouble("warp_z"),
+                    result.getFloat("warp_yaw"),
+                    result.getFloat("warp_pitch"));
+        }
+        island.setBorderColorRaw(result.getString("border_color"));
+        island.setBankRaw(result.getDouble("bank"));
 
         island.markClean();
         return island;
@@ -175,12 +188,12 @@ public class SqlStorage implements Storage {
         String columns = "uuid, owner, world, grid_index, center_x, center_y, center_z, " +
                 "home_x, home_y, home_z, home_yaw, home_pitch, flags, " +
                 "name, locked, island_time, points, level, members, banned, upgrades, server, " +
-                "has_warp, warp_x, warp_y, warp_z, warp_yaw, warp_pitch";
-        String placeholders = "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?";
+                "has_warp, warp_x, warp_y, warp_z, warp_yaw, warp_pitch, border_color, bank, warps, custom_roles";
+        String placeholders = "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?";
         String updateAssignments = "owner=?, world=?, grid_index=?, center_x=?, center_y=?, center_z=?, " +
                 "home_x=?, home_y=?, home_z=?, home_yaw=?, home_pitch=?, flags=?, " +
                 "name=?, locked=?, island_time=?, points=?, level=?, members=?, banned=?, upgrades=?, server=?, " +
-                "has_warp=?, warp_x=?, warp_y=?, warp_z=?, warp_yaw=?, warp_pitch=?";
+                "has_warp=?, warp_x=?, warp_y=?, warp_z=?, warp_yaw=?, warp_pitch=?, border_color=?, bank=?, warps=?, custom_roles=?";
 
         String sql = this.mysql
                 ? "INSERT INTO islands (" + columns + ") VALUES (" + placeholders + ") " +
@@ -231,6 +244,10 @@ public class SqlStorage implements Storage {
         statement.setDouble(i++, island.getWarpZ());
         statement.setFloat(i++, island.getWarpYaw());
         statement.setFloat(i++, island.getWarpPitch());
+        statement.setString(i++, island.getBorderColor());
+        statement.setDouble(i++, island.getBank());
+        statement.setString(i++, island.serializeWarps());
+        statement.setString(i++, island.serializeCustomRoles());
         return i;
     }
 

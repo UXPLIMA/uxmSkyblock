@@ -60,8 +60,8 @@ public abstract class CommandHandler {
 
     protected String joinRoles() {
         StringJoiner joiner = new StringJoiner(", ");
-        for (IslandRole role : IslandRole.assignable())
-            joiner.add(role.name().toLowerCase());
+        for (net.cengiz1.skyblock.island.RoleData role : plugin.getRoleManager().assignableBuiltins())
+            joiner.add(role.getId());
         return joiner.toString();
     }
 }

@@ -10,5 +10,7 @@ public interface EconomyHook {
 
     boolean withdraw(Player player, double amount);
 
+    boolean deposit(Player player, double amount);
+
     double balance(Player player);
 }

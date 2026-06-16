@@ -20,6 +20,8 @@ public class IslandCommand extends Command {
     private final SettingsCommands settings;
     private final AdminCommands admin;
     private final WarpCommands warps;
+    private final BankCommands bank;
+    private final RoleCommands roles;
 
     public IslandCommand(SkyblockPlugin plugin, String name, List<String> aliases, Map<String, String> resolver) {
         super(name);
@@ -30,6 +32,8 @@ public class IslandCommand extends Command {
         this.settings = new SettingsCommands(plugin);
         this.admin = new AdminCommands(plugin);
         this.warps = new WarpCommands(plugin);
+        this.bank = new BankCommands(plugin);
+        this.roles = new RoleCommands(plugin, this.members);
         setAliases(aliases);
         setDescription("Island commands");
     }
@@ -77,17 +81,25 @@ public class IslandCommand extends Command {
             case "unban":     members.unban(player, arg1); break;
             case "trust":     members.trust(player, arg1); break;
             case "untrust":   members.untrust(player, arg1); break;
-            case "rol":       members.setRole(player, arg1, arg2); break;
+            case "rol":
+                if (RoleCommands.isManagement(arg1))
+                    roles.handle(player, args);
+                else
+                    members.setRole(player, arg1, arg2);
+                break;
 
             case "ayarlar":   settings.openIslandMenu(player, "settings"); break;
             case "yukseltme": settings.openIslandMenu(player, "upgrades"); break;
             case "setspawn":  settings.setSpawn(player); break;
             case "ucus":      settings.toggleFly(player); break;
             case "kilit":     settings.toggleLock(player); break;
+            case "border":    settings.setBorderColor(player, arg1); break;
+            case "block":     general.openMenu(player, "blocks"); break;
+            case "bank":      bank.handle(player, arg1, arg2); break;
 
-            case "warp":      warps.warp(player, arg1); break;
-            case "setwarp":   warps.setWarp(player); break;
-            case "delwarp":   warps.delWarp(player); break;
+            case "warp":      warps.warp(player, arg1, arg2); break;
+            case "setwarp":   warps.setWarp(player, arg1); break;
+            case "delwarp":   warps.delWarp(player, arg1); break;
 
             case "proxy":     admin.proxyStatus(player); break;
             case "anaspawn":  admin.setGlobalSpawn(player); break;

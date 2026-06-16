@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,10 @@ public class WarpService {
     }
 
     public void warpByName(Player viewer, String targetName) {
+        warpByName(viewer, targetName, null);
+    }
+
+    public void warpByName(Player viewer, String targetName, String warpName) {
         OfflinePlayer target = resolveOffline(targetName);
         if (target == null) {
             plugin.getMessages().send(viewer, "player-not-found", "{player}", targetName);
@@ -54,7 +59,7 @@ public class WarpService {
             plugin.getMessages().send(viewer, "warp-no-warp", "{player}", targetName);
             return;
         }
-        warp(viewer, island);
+        warp(viewer, island, warpName);
     }
 
     public void warpToOwner(Player viewer, UUID ownerId) {
@@ -63,10 +68,14 @@ public class WarpService {
             plugin.getMessages().send(viewer, "warp-no-warp", "{player}", nameOf(ownerId));
             return;
         }
-        warp(viewer, island);
+        warp(viewer, island, null);
     }
 
     public void warp(Player viewer, Island island) {
+        warp(viewer, island, null);
+    }
+
+    public void warp(Player viewer, Island island, String warpName) {
         UUID playerId = viewer.getUniqueId();
         if (island.isBanned(playerId)) {
             plugin.getMessages().send(viewer, "visit-banned");
@@ -76,19 +85,46 @@ public class WarpService {
             plugin.getMessages().send(viewer, "warp-no-warp", "{player}", nameOf(island.getOwner()));
             return;
         }
+        // A specific warp was requested but does not exist on that island.
+        if (warpName != null && !warpName.isEmpty() && !island.hasWarp(warpName)) {
+            plugin.getMessages().send(viewer, "warp-unknown-name", "{name}", warpName);
+            return;
+        }
 
         ProxyManager proxy = plugin.getProxyManager();
-        if (proxy != null && proxy.handleWarpTeleport(viewer, island))
+        if (proxy != null && proxy.handleWarpTeleport(viewer, island, warpName))
             return;
 
         World world = plugin.getWorldManager().getWorld();
-        Location warp = island.getWarp(world);
+        Location warp = island.getWarp(world, warpName);
         if (!SafeLocation.isSafe(warp)) {
             plugin.getMessages().send(viewer, "warp-unsafe");
             return;
         }
         plugin.getMessages().send(viewer, "warping", "{player}", nameOf(island.getOwner()));
-        plugin.getIslandManager().teleportToWarp(viewer, island);
+        plugin.getIslandManager().teleportToWarp(viewer, island, warpName);
+    }
+
+    /** Maximum number of named warps a player's island may have. */
+    public int getWarpLimit(Player player) {
+        int limit = plugin.getSettings().getWarpDefaultLimit();
+        String prefix = plugin.getSettings().getWarpPermissionPrefix();
+        if (player.hasPermission(prefix + ".*"))
+            return Integer.MAX_VALUE;
+        for (PermissionAttachmentInfo info : player.getEffectivePermissions()) {
+            if (!info.getValue())
+                continue;
+            String perm = info.getPermission();
+            if (perm.length() <= prefix.length() + 1 || !perm.startsWith(prefix + "."))
+                continue;
+            try {
+                int n = Integer.parseInt(perm.substring(prefix.length() + 1));
+                if (n > limit)
+                    limit = n;
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return limit;
     }
 
     private OfflinePlayer resolveOffline(String name) {

@@ -8,6 +8,9 @@
 # storage, proxy, module loader) keep working so modules can use them.
 island:
   enabled: true
+  # Clear a player's inventory when they leave (or are kicked from) an island.
+  # Prevents members from walking off with island loot. Default: false.
+  clear-inventory-on-leave: false
 
 world:
   name: islands
@@ -80,6 +83,10 @@ command:
     setspawn: ["setspawn", "sethome", "spawnayarla"]
     ucus: ["fly", "uçuş", "ucus"]
     kilit: ["lock", "kilit", "kapat"]
+    border: ["border", "sınır", "sinir", "borderrenk"]
+    block: ["block", "blok", "blokpuan", "bloklar"]
+    bank: ["bank", "banka"]
+    top: ["top", "sıralama", "siralama", "lider"]
     bilgi: ["info", "bilgi"]
     uyeler: ["members", "üyeler", "uyeler"]
     proxy: ["proxy", "status"]
@@ -96,6 +103,11 @@ warp:
   sign-tag: "[warp]"
   # How the first line looks after the sign becomes an active warp.
   sign-display: "&9[Warp]"
+  # How many named warps an island may have. The base limit applies to everyone;
+  # a player can raise it with the permission 'skyblock.warps.<number>' (the
+  # highest number they hold wins). Example: skyblock.warps.5 -> up to 5 warps.
+  default-limit: 1
+  permission-prefix: "skyblock.warps"
 
 economy:
   # Require the upgrade 'required-money' (Vault) cost? Disabled automatically

@@ -23,3 +23,4 @@ values:
   STONE: 0.01
   OAK_LOG: 0.05
   GRASS_BLOCK: 0.02
+  OBSIDIAN: 0.5
