@@ -41,6 +41,8 @@ public final class SkyblockPlugin extends JavaPlugin {
     private InviteManager inviteManager;
     private VisitService visitService;
     private WarpService warpService;
+    private net.cengiz1.skyblock.island.TopService topService;
+    private net.cengiz1.skyblock.island.TopHologramManager topHologramManager;
     private EconomyHook economy;
     private ProxyManager proxyManager;
     private ModuleManager moduleManager;
@@ -84,6 +86,7 @@ public final class SkyblockPlugin extends JavaPlugin {
         this.inviteManager = new InviteManager(this.settings.getInviteExpireSeconds());
         this.visitService = new VisitService(this);
         this.warpService = new WarpService(this);
+        this.topService = new net.cengiz1.skyblock.island.TopService(this);
 
         this.economy = setupEconomy();
         this.upgradeManager = new UpgradeManager(this);
@@ -96,6 +99,10 @@ public final class SkyblockPlugin extends JavaPlugin {
 
         if (this.settings.isIslandEnabled()) {
             ListenerRegistrar.registerAll(this);
+
+            this.topHologramManager = new net.cengiz1.skyblock.island.TopHologramManager(this, this.topService);
+            getServer().getPluginManager().registerEvents(this.topHologramManager, this);
+            this.topHologramManager.start();
 
             if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null)
                 registerPlaceholders();
@@ -114,6 +121,8 @@ public final class SkyblockPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (this.topHologramManager != null)
+            this.topHologramManager.stop();
         if (this.moduleManager != null)
             this.moduleManager.unloadModules();
         CommandRegistrar.unregister(this);
@@ -209,6 +218,14 @@ public final class SkyblockPlugin extends JavaPlugin {
 
     public WarpService getWarpService() {
         return warpService;
+    }
+
+    public net.cengiz1.skyblock.island.TopService getTopService() {
+        return topService;
+    }
+
+    public net.cengiz1.skyblock.island.TopHologramManager getTopHologramManager() {
+        return topHologramManager;
     }
 
     public EconomyHook getEconomy() {

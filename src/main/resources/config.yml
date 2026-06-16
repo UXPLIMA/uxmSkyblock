@@ -114,6 +114,25 @@ economy:
   # if Vault is missing, in which case only the level requirement applies.
   enabled: true
 
+# Island leaderboard (/island top) and the personal floating hologram that
+# follows the player around (/island top holo). The hologram is only visible to
+# the player who toggled it and works in any world (including Chunklock worlds).
+top:
+  # How many islands /island top lists in chat.
+  chat-lines: 10
+  hologram:
+    # How many ranks the floating hologram shows.
+    lines: 10
+    # How far above the player's head the hologram floats.
+    height: 2.8
+    # How often (in ticks) the hologram text is refreshed. It re-follows the
+    # player every 2 ticks regardless.
+    refresh-ticks: 40
+    title: "&6&lTOP ISLANDS"
+    # {rank} {owner} {level} {points}
+    entry: "&7{rank}. &f{owner} &8- &a{level} &7({points})"
+    empty: "&7No islands yet."
+
 schematics:
   default: classic
   list:

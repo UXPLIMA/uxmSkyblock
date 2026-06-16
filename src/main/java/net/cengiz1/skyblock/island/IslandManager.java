@@ -32,6 +32,8 @@ public class IslandManager {
 
     private final Map<UUID, Island> islandsById = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> ownerToIsland = new ConcurrentHashMap<>();
+    // Grid cell (packed cellX/cellZ) -> island id, for O(1) getIslandAt lookups.
+    private final Map<Long, UUID> cellToIsland = new ConcurrentHashMap<>();
 
     private UpgradeManager upgradeManager;
 
@@ -56,6 +58,7 @@ public class IslandManager {
         for (Island island : this.storage.loadAll()) {
             this.islandsById.put(island.getUniqueId(), island);
             this.ownerToIsland.put(island.getOwner(), island.getUniqueId());
+            this.cellToIsland.put(cellOfCenter(island.getCenterX(), island.getCenterZ()), island.getUniqueId());
             if (island.getGridIndex() > highestIndex)
                 highestIndex = island.getGridIndex();
         }
@@ -123,12 +126,24 @@ public class IslandManager {
             this.ownerToIsland.remove(existing.getOwner());
         this.islandsById.put(islandId, fresh);
         this.ownerToIsland.put(fresh.getOwner(), islandId);
+        this.cellToIsland.put(cellOfCenter(fresh.getCenterX(), fresh.getCenterZ()), islandId);
     }
 
     public void removeFromCache(UUID islandId) {
         Island existing = this.islandsById.remove(islandId);
-        if (existing != null)
+        if (existing != null) {
             this.ownerToIsland.remove(existing.getOwner());
+            this.cellToIsland.remove(cellOfCenter(existing.getCenterX(), existing.getCenterZ()), islandId);
+        }
+    }
+
+    private long cellKey(int cellX, int cellZ) {
+        return ((long) cellX << 32) ^ (cellZ & 0xffffffffL);
+    }
+
+    private long cellOfCenter(int centerX, int centerZ) {
+        int dist = Math.max(1, settings.getIslandDistance());
+        return cellKey(Math.round(centerX / (float) dist), Math.round(centerZ / (float) dist));
     }
 
     public int getProtectionHalf(Island island) {
@@ -142,20 +157,27 @@ public class IslandManager {
         if (location.getWorld() == null)
             return null;
 
-        String worldName = location.getWorld().getName();
+        // Islands sit on a fixed grid, so the location maps to exactly one cell.
+        int dist = Math.max(1, settings.getIslandDistance());
+        int cellX = Math.round(location.getBlockX() / (float) dist);
+        int cellZ = Math.round(location.getBlockZ() / (float) dist);
+        UUID islandId = this.cellToIsland.get(cellKey(cellX, cellZ));
+        if (islandId == null)
+            return null;
 
-        for (Island island : this.islandsById.values()) {
-            if (!island.getWorldName().equals(worldName))
-                continue;
+        Island island = this.islandsById.get(islandId);
+        if (island == null)
+            return null;
+        if (!island.getWorldName().equals(location.getWorld().getName()))
+            return null;
+        if (this.localServerName != null && island.getServerName() != null
+                && !island.getServerName().equals(this.localServerName))
+            return null;
 
-            if (this.localServerName != null && island.getServerName() != null
-                    && !island.getServerName().equals(this.localServerName))
-                continue;
-            int half = getProtectionHalf(island);
-            if (Math.abs(location.getBlockX() - island.getCenterX()) <= half &&
-                    Math.abs(location.getBlockZ() - island.getCenterZ()) <= half)
-                return island;
-        }
+        int half = getProtectionHalf(island);
+        if (Math.abs(location.getBlockX() - island.getCenterX()) <= half &&
+                Math.abs(location.getBlockZ() - island.getCenterZ()) <= half)
+            return island;
 
         return null;
     }
@@ -163,6 +185,7 @@ public class IslandManager {
     public void register(Island island) {
         this.islandsById.put(island.getUniqueId(), island);
         this.ownerToIsland.put(island.getOwner(), island.getUniqueId());
+        this.cellToIsland.put(cellOfCenter(island.getCenterX(), island.getCenterZ()), island.getUniqueId());
     }
 
     public Island getByMember(UUID playerId) {

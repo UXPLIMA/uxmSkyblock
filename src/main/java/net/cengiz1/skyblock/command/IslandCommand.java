@@ -22,6 +22,7 @@ public class IslandCommand extends Command {
     private final WarpCommands warps;
     private final BankCommands bank;
     private final RoleCommands roles;
+    private final TopCommands top;
 
     public IslandCommand(SkyblockPlugin plugin, String name, List<String> aliases, Map<String, String> resolver) {
         super(name);
@@ -34,6 +35,7 @@ public class IslandCommand extends Command {
         this.warps = new WarpCommands(plugin);
         this.bank = new BankCommands(plugin);
         this.roles = new RoleCommands(plugin, this.members);
+        this.top = new TopCommands(plugin);
         setAliases(aliases);
         setDescription("Island commands");
     }
@@ -96,6 +98,7 @@ public class IslandCommand extends Command {
             case "border":    settings.setBorderColor(player, arg1); break;
             case "block":     general.openMenu(player, "blocks"); break;
             case "bank":      bank.handle(player, arg1, arg2); break;
+            case "top":       top.handle(player, arg1); break;
 
             case "warp":      warps.warp(player, arg1, arg2); break;
             case "setwarp":   warps.setWarp(player, arg1); break;

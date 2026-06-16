@@ -58,6 +58,13 @@ messages:
   level-up: "&aCongratulations! Your island reached level &e{level}&a!"
   level-info: "&7Island Level: &e{level} &8| &7Points: &e{points} &8| &7Next: &e{next}"
 
+  # Leaderboard (/island top)
+  top-header: "&b&l— Top Islands —"
+  top-entry: "&e#{rank} &f{owner} &8- &7level &a{level} &8(&7{points}&8)"
+  top-empty: "&7There are no islands yet."
+  top-holo-on: "&aThe leaderboard hologram will now follow you. Toggle it off with the same command."
+  top-holo-off: "&7The leaderboard hologram has been turned off."
+
   # Invites and membership
   usage-invite: "&cUsage: /island invite <name>"
   usage-kick: "&cUsage: /island kick <name>"
