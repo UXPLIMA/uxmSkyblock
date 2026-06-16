@@ -94,6 +94,46 @@ upgrading never wipes your settings.
 
 The shaded jar lands in `build/libs/`.
 
+## Modules
+
+Skyblock has its own add-on system, so you can bolt new mechanics onto islands
+without forking the plugin or shipping a second standalone plugin. A module is
+just a small jar you drop into:
+
+```
+plugins/Skyblock/modules/
+```
+
+It loads on top of the core and gets full access to the island API — islands,
+members, roles, points, levels, upgrades, the economy hook, storage, and the
+proxy layer. A module can register its own listeners and commands (they're cleaned
+up automatically when the module unloads) and keep its own `config.yml` and data
+folder, completely separate from the main plugin.
+
+Because modules share the core's classloader, they also share its database
+connection and proxy messaging. That means an add-on can store its data in the
+same MySQL database and stay in sync across a multi-backend network for free,
+instead of reinventing storage and cross-server syncing.
+
+Each module jar carries a `module.yml` (name, version, main class) and a main
+class that hooks into three points:
+
+- `onLoad` — grab what you need from the core API
+- `onEnable` — register listeners, commands, and tasks
+- `onDisable` — tear down cleanly on reload or shutdown
+
+**Chunklock** is the first module built on this. It turns the world into a shared
+grid where each island starts boxed in, and players expand their territory chunk
+by chunk by dropping the items the next chunk costs. It reuses the core island
+system end to end — membership, roles, bans, warps, visiting, and upgrades all
+work exactly as they do on a normal island — and stays in sync across servers
+through the same database and Redis channel the core uses.
+
+To run a server that hosts only a module (for example a pure Chunklock server),
+set `island.enabled: false`. The `/island` command and island world stay off, but
+the core managers — economy, block values, storage, proxy, and the module loader
+— keep running so the module has everything it needs.
+
 ## License
 
 Free to use. Pull requests and issues are welcome.
