@@ -1,0 +1,38 @@
+title: "&8Ada Türü Seç"
+rows: 3
+type: schematics
+
+head-slots: [10, 11, 12, 13, 14, 15, 16]
+
+schematic-name: "&a&l{name}"
+schematic-lore:
+  - "&7Bu ada türünü seçmek için"
+  - "&7tıkla."
+  - ""
+  - "&eTıkla &7ve adanı kur!"
+
+items:
+  filler:
+    slot: 4
+    material: NETHER_STAR
+    name: "&bBir ada türü seç"
+    lore:
+      - "&7Aşağıdan başlangıç adanı seç."
+
+  prev-page:
+    slot: 18
+    material: ARROW
+    name: "&eÖnceki Sayfa"
+    action: "page:prev"
+
+  close:
+    slot: 22
+    material: BARRIER
+    name: "&cKapat"
+    action: "close"
+
+  next-page:
+    slot: 26
+    material: ARROW
+    name: "&eSonraki Sayfa"
+    action: "page:next"

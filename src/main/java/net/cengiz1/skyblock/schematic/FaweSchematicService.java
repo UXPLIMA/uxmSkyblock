@@ -72,13 +72,16 @@ public class FaweSchematicService implements SchematicService {
 
                 String displayName = entry.getString("display-name", key);
                 String file = entry.getString("file", key + ".schem");
+                org.bukkit.Material icon = org.bukkit.Material.matchMaterial(entry.getString("icon", "GRASS_BLOCK"));
+                if (icon == null)
+                    icon = org.bukkit.Material.GRASS_BLOCK;
                 double offsetX = entry.getDouble("home-offset.x", 0.5);
                 double offsetY = entry.getDouble("home-offset.y", 1.0);
                 double offsetZ = entry.getDouble("home-offset.z", 0.5);
 
                 extractBundled(file);
                 this.definitions.put(key.toLowerCase(),
-                        new SchematicDefinition(key.toLowerCase(), displayName, file, offsetX, offsetY, offsetZ));
+                        new SchematicDefinition(key.toLowerCase(), displayName, file, icon, offsetX, offsetY, offsetZ));
             }
         }
 

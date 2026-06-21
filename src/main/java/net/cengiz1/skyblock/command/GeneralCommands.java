@@ -55,6 +55,11 @@ public class GeneralCommands extends CommandHandler {
             plugin.getMessages().send(player, "creating-in-progress");
             return;
         }
+        if (type == null && plugin.getMenuManager().has("create")
+                && manager.getSchematicService().isReady()) {
+            plugin.getMenuManager().open(player, "create", null);
+            return;
+        }
         if (type != null && manager.getSchematicService().isReady() && !manager.getSchematicService().has(type)) {
             plugin.getMessages().send(player, "invalid-schematic", "{types}", joinTypes());
             return;

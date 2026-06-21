@@ -38,7 +38,7 @@ public class MenuManager {
 
     private static final String[] DEFAULT_MENUS = {
             "main.yml", "settings.yml", "upgrades.yml", "help.yml", "delete-confirm.yml", "warp.yml",
-            "blocks.yml"
+            "blocks.yml", "create.yml"
     };
 
     private static final Pattern FLAG_PATTERN = Pattern.compile("\\{flag_([a-zA-Z_]+)\\}");
@@ -92,6 +92,9 @@ public class MenuManager {
 
         definition.setBlockName(config.getString("block-name"));
         definition.setBlockLore(config.getStringList("block-lore"));
+
+        definition.setSchematicName(config.getString("schematic-name"));
+        definition.setSchematicLore(config.getStringList("schematic-lore"));
 
         ConfigurationSection items = config.getConfigurationSection("items");
         if (items != null) {
@@ -157,6 +160,9 @@ public class MenuManager {
 
         if (definition.getType().equals("blocks"))
             populateBlocks(definition, inventory, holder);
+
+        if (definition.getType().equals("schematics"))
+            populateSchematics(definition, inventory, holder);
 
         player.openInventory(inventory);
     }
@@ -228,6 +234,51 @@ public class MenuManager {
             Map.Entry<Material, Double> entry = values.get(index);
             inventory.setItem(slot, buildBlockItem(definition, entry.getKey(), entry.getValue()));
         }
+    }
+
+    private void populateSchematics(MenuDefinition definition, Inventory inventory, MenuHolder holder) {
+        List<Integer> slots = definition.getHeadSlots();
+        if (slots.isEmpty())
+            return;
+
+        List<net.cengiz1.skyblock.schematic.SchematicDefinition> schematics =
+                new ArrayList<>(islandManager.getSchematicService().getDefinitions());
+        int perPage = slots.size();
+        int pageCount = Math.max(1, (int) Math.ceil(schematics.size() / (double) perPage));
+        int page = Math.min(holder.getPage(), pageCount - 1);
+        holder.setPageCount(pageCount);
+
+        int start = page * perPage;
+        for (int i = 0; i < perPage; i++) {
+            int index = start + i;
+            int slot = slots.get(i);
+            if (slot < 0 || slot >= inventory.getSize() || index >= schematics.size())
+                continue;
+            net.cengiz1.skyblock.schematic.SchematicDefinition schematic = schematics.get(index);
+            inventory.setItem(slot, buildSchematicItem(definition, schematic));
+            holder.getActions().put(slot, "island:create " + schematic.getKey());
+        }
+    }
+
+    private ItemStack buildSchematicItem(MenuDefinition definition,
+                                         net.cengiz1.skyblock.schematic.SchematicDefinition schematic) {
+        Material icon = schematic.getIcon() != null && schematic.getIcon().isItem()
+                ? schematic.getIcon() : Material.GRASS_BLOCK;
+        ItemStack item = new ItemStack(icon);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            String name = schematic.getDisplayName();
+            String key = schematic.getKey();
+            meta.setDisplayName(color(definition.getSchematicName()
+                    .replace("{name}", name).replace("{key}", key)));
+            List<String> lore = new ArrayList<>();
+            for (String line : definition.getSchematicLore())
+                lore.add(color(line.replace("{name}", name).replace("{key}", key)));
+            if (!lore.isEmpty())
+                meta.setLore(lore);
+            item.setItemMeta(meta);
+        }
+        return item;
     }
 
     private ItemStack buildBlockItem(MenuDefinition definition, Material material, double value) {

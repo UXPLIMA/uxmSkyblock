@@ -45,6 +45,9 @@ public class MenuDefinition {
     private String blockName = "&e{block}";
     private List<String> blockLore = new ArrayList<>();
 
+    private String schematicName = "&a{name}";
+    private List<String> schematicLore = new ArrayList<>();
+
     public MenuDefinition(String title, int rows, String type) {
         this.title = title;
         this.rows = rows;
@@ -144,5 +147,23 @@ public class MenuDefinition {
     public void setBlockLore(List<String> blockLore) {
         if (blockLore != null && !blockLore.isEmpty())
             this.blockLore = blockLore;
+    }
+
+    public String getSchematicName() {
+        return schematicName;
+    }
+
+    public void setSchematicName(String schematicName) {
+        if (schematicName != null && !schematicName.isEmpty())
+            this.schematicName = schematicName;
+    }
+
+    public List<String> getSchematicLore() {
+        return schematicLore;
+    }
+
+    public void setSchematicLore(List<String> schematicLore) {
+        if (schematicLore != null && !schematicLore.isEmpty())
+            this.schematicLore = schematicLore;
     }
 }
