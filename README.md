@@ -107,7 +107,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'com.github.Dsngxddd:uxmSkyblock:0.4.0'
+    compileOnly 'com.github.UXPLIMA:uxmSkyblock:0.4.0'
 }
 ```
 
@@ -120,7 +120,7 @@ dependencies {
 </repository>
 
 <dependency>
-    <groupId>com.github.Dsngxddd</groupId>
+    <groupId>com.github.UXPLIMA</groupId>
     <artifactId>uxmSkyblock</artifactId>
     <version>0.4.0</version>
     <scope>provided</scope>

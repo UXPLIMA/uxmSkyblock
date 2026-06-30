@@ -57,7 +57,7 @@ jar {
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = 'com.github.Dsngxddd'
+            groupId = 'com.github.UXPLIMA'
             artifactId = 'uxmSkyblock'
             version = project.version
             artifact tasks.named('jar')
