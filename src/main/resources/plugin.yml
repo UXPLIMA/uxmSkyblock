@@ -1,6 +1,6 @@
-name: Skyblock
+name: uxmSkyblock
 version: 0.4.0
-main: net.cengiz1.skyblock.SkyblockPlugin
+main: net.cengiz1.uxmskyblock.UxmSkyblockPlugin
 api-version: 1.21
 author: cengiz1x
 softdepend: [FastAsyncWorldEdit, Vault, PlaceholderAPI]
@@ -10,5 +10,5 @@ permissions:
     description: Allows locking the island time (day/night)
     default: op
   skyblock.admin:
-    description: Skyblock administrator permission
+    description: uxmSkyblock administrator permission
     default: op

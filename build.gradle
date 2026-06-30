@@ -4,7 +4,7 @@ plugins {
     id 'maven-publish'
 }
 
-group 'net.cengiz1.skyblock'
+group 'net.cengiz1.uxmskyblock'
 version '0.4.0'
 
 repositories {
@@ -43,7 +43,7 @@ java {
 }
 
 shadowJar {
-    archiveFileName = 'Skyblock-' + version + '.jar'
+    archiveFileName = 'uxmSkyblock-' + version + '.jar'
 }
 
 build {
@@ -51,14 +51,14 @@ build {
 }
 
 jar {
-    archiveBaseName = 'SkyblockCore-api'
+    archiveBaseName = 'uxmSkyblock-api'
 }
 
 publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'com.github.Dsngxddd'
-            artifactId = 'SkyblockCore'
+            artifactId = 'uxmSkyblock'
             version = project.version
             artifact tasks.named('jar')
             artifact tasks.named('sourcesJar')

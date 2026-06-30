@@ -1,0 +1,16 @@
+package net.cengiz1.uxmskyblock.upgrade;
+
+public enum UpgradeType {
+    VALUE,
+    GENERATOR;
+
+    public static UpgradeType fromString(String name) {
+        if (name == null)
+            return VALUE;
+        try {
+            return valueOf(name.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException error) {
+            return VALUE;
+        }
+    }
+}

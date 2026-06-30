@@ -1,6 +1,6 @@
-# Skyblock
+# uxmSkyblock
 
-A complete, config-first Skyblock plugin for Paper/Spigot **1.21.4**. Everything a
+A complete, config-first uxmSkyblock plugin for Paper/Spigot **1.21.4**. Everything a
 player touches — commands, messages, menus, roles, upgrades, block values — lives
 in YAML, so you can rename, retheme, or translate the whole thing without writing
 a line of code. It runs fine on a single server and scales out to a multi-backend
@@ -36,7 +36,7 @@ Built for Java 21.
 - **Cross-server ready.** An optional proxy layer keeps islands in sync across
   multiple backends behind Velocity/BungeeCord using a shared database and Redis.
 - **Extensible.** A lightweight module loader lets you drop add-on jars into
-  `plugins/Skyblock/modules/` and reuse the core island API.
+  `plugins/uxmSkyblock/modules/` and reuse the core island API.
 
 ## Commands
 
@@ -94,7 +94,7 @@ upgrading never wipes your settings.
 
 The shaded jar lands in `build/libs/`.
 
-## Using SkyblockCore as a dependency
+## Using uxmSkyblock as a dependency
 
 The core is published through [JitPack](https://jitpack.io), so other plugins and
 modules can compile against its API.
@@ -107,7 +107,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'com.github.Dsngxddd:SkyblockCore:0.4.0'
+    compileOnly 'com.github.Dsngxddd:uxmSkyblock:0.4.0'
 }
 ```
 
@@ -121,7 +121,7 @@ dependencies {
 
 <dependency>
     <groupId>com.github.Dsngxddd</groupId>
-    <artifactId>SkyblockCore</artifactId>
+    <artifactId>uxmSkyblock</artifactId>
     <version>0.4.0</version>
     <scope>provided</scope>
 </dependency>
@@ -132,17 +132,17 @@ you only compile against it — you don't bundle it.
 
 **What the API gives you**
 
-- `SkyblockPlugin` — the entry point: `getIslandManager()`, `getRoleManager()`,
+- `UxmSkyblockPlugin` — the entry point: `getIslandManager()`, `getRoleManager()`,
   `getEconomy()`, `getTopService()`, `getWarpService()`, and more.
 - `Island` / `IslandManager` — islands, members, roles, points, bank, warps.
 - `RoleData` / `RoleResolver` — built-in and per-island custom roles.
 - `IslandCreateEvent` / `IslandDeleteEvent` — Bukkit events to listen for.
-- `SkyblockModule` + `ModuleContext` — write a drop-in module (see below).
+- `UxmSkyblockModule` + `ModuleContext` — write a drop-in module (see below).
 
 **Example** — read and modify an island from your own plugin:
 
 ```java
-SkyblockPlugin core = (SkyblockPlugin) Bukkit.getPluginManager().getPlugin("Skyblock");
+UxmSkyblockPlugin core = (UxmSkyblockPlugin) Bukkit.getPluginManager().getPlugin("uxmSkyblock");
 Island island = core.getIslandManager().getByMember(player.getUniqueId());
 if (island != null) {
     island.depositBank(1000);
@@ -152,12 +152,12 @@ if (island != null) {
 
 ## Modules
 
-Skyblock has its own add-on system, so you can bolt new mechanics onto islands
+uxmSkyblock has its own add-on system, so you can bolt new mechanics onto islands
 without forking the plugin or shipping a second standalone plugin. A module is
 just a small jar you drop into:
 
 ```
-plugins/Skyblock/modules/
+plugins/uxmSkyblock/modules/
 ```
 
 It loads on top of the core and gets full access to the island API — islands,

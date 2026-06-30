@@ -1,8 +1,8 @@
-# Main Skyblock settings.
+# Main uxmSkyblock settings.
 # New keys added in plugin updates are merged into this file automatically,
 # so your existing values are kept when you upgrade.
 
-# Skyblock island system. Set to false on a server that should run ONLY a
+# uxmSkyblock island system. Set to false on a server that should run ONLY a
 # module (e.g. Chunklock): the /ada (island) command, island listeners and the
 # island world stay unregistered, but core managers (economy, block values,
 # storage, proxy, module loader) keep working so modules can use them.
