@@ -1,6 +1,6 @@
 # uxmSkyblock
 
-[![JitPack](https://jitpack.io/v/UXPLIMA/uxmSkyblock.svg)](https://jitpack.io/#UXPLIMA/uxmSkyblock)
+[![](https://jitpack.io/v/Dsngxddd/SkyblockCore.svg)](https://jitpack.io/#Dsngxddd/SkyblockCore)
 [![Java 21](https://img.shields.io/badge/Java-21-orange.svg)](https://adoptium.net/)
 [![Paper 1.21.4](https://img.shields.io/badge/Paper-1.21.4-brightgreen.svg)](https://papermc.io/)
 [![Cross-server](https://img.shields.io/badge/cross--server-ready-success.svg)](#cross-server-networks)
